@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'nuevo_admin.dart'; // Importa tu otra pantalla
+import 'nuevo_admin.dart'; // Pantalla de inicio administardor
 
 class AdminHomeScreen extends StatelessWidget {
   const AdminHomeScreen({super.key});

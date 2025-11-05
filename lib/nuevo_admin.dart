@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 class NuevoAdminScreen extends StatefulWidget {
-  const NuevoAdminScreen({super.key});
+  const NuevoAdminScreen({super.key}); //Pantalla de nuevo administrador
 
   @override
   State<NuevoAdminScreen> createState() => _NuevoAdminScreenState();
