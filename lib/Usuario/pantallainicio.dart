@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import '../recipe_detail_screen.dart'; // 👈 Import agregado
 
 class PantallaInicio extends StatelessWidget {
-  const PantallaInicio({Key? key}) : super(key: key);
+  const PantallaInicio({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -26,7 +26,7 @@ class PantallaInicio extends StatelessWidget {
 }
 
 class HomeScreen extends StatefulWidget {
-  const HomeScreen({Key? key}) : super(key: key);
+  const HomeScreen({super.key});
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
@@ -493,7 +493,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
 // Pantallas de destino
 class FavoritesScreen extends StatelessWidget {
-  const FavoritesScreen({Key? key}) : super(key: key);
+  const FavoritesScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -508,7 +508,7 @@ class FavoritesScreen extends StatelessWidget {
 }
 
 class MyMealsScreen extends StatelessWidget {
-  const MyMealsScreen({Key? key}) : super(key: key);
+  const MyMealsScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -523,7 +523,7 @@ class MyMealsScreen extends StatelessWidget {
 }
 
 class SettingsScreen extends StatelessWidget {
-  const SettingsScreen({Key? key}) : super(key: key);
+  const SettingsScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
