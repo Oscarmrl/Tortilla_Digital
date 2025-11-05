@@ -1,0 +1,142 @@
+{
+  "usuario1": {
+    "nombre": "Oscar Murillo",
+    "correo": "oscaralexandermurillo512@gmail.com",
+    "rol": "Cliente",
+    "favoritos": ["receta1", "receta2"],
+    "fechaCreacion": "2025-11-02T22:40:31Z"
+  },
+  "usuario2": {
+    "nombre": "María González",
+    "correo": "maria.gonzalez@email.com",
+    "rol": "Admin",
+    "favoritos": ["receta3", "receta5", "receta7"],
+    "fechaCreacion": "2025-01-15T08:20:00Z"
+  },
+  "usuario3": {
+    "nombre": "Carlos Hernández",
+    "correo": "carlos.hernandez@email.com",
+    "rol": "Cliente",
+    "favoritos": ["receta4", "receta8"],
+    "fechaCreacion": "2025-10-20T14:30:45Z"
+  },
+  "usuario4": {
+    "nombre": "Ana Rodríguez",
+    "correo": "ana.rodriguez@email.com",
+    "rol": "Cliente",
+    "favoritos": ["receta1", "receta3", "receta5"],
+    "fechaCreacion": "2025-09-12T16:15:20Z"
+  },
+  "usuario5": {
+    "nombre": "Luis Martínez",
+    "correo": "luis.martinez@email.com",
+    "rol": "Admin",
+    "favoritos": ["receta2", "receta6", "receta9", "receta10"],
+    "fechaCreacion": "2025-02-03T10:00:00Z"
+  },
+  "usuario6": {
+    "nombre": "Sofia López",
+    "correo": "sofia.lopez@email.com",
+    "rol": "Cliente",
+    "favoritos": ["receta7", "receta11"],
+    "fechaCreacion": "2025-10-28T18:45:30Z"
+  },
+  "usuario7": {
+    "nombre": "Diego Ramírez",
+    "correo": "diego.ramirez@email.com",
+    "rol": "Cliente",
+    "favoritos": ["receta12", "receta14", "receta16"],
+    "fechaCreacion": "2025-08-05T12:20:15Z"
+  },
+  "usuario8": {
+    "nombre": "Valentina Torres",
+    "correo": "valentina.torres@email.com",
+    "rol": "Cliente",
+    "favoritos": ["receta10", "receta15"],
+    "fechaCreacion": "2025-10-15T09:30:00Z"
+  },
+  "usuario9": {
+    "nombre": "Andrés Flores",
+    "correo": "andres.flores@email.com",
+    "rol": "Cliente",
+    "favoritos": ["receta13", "receta17", "receta20"],
+    "fechaCreacion": "2025-07-22T20:10:45Z"
+  },
+  "usuario10": {
+    "nombre": "Isabella Morales",
+    "correo": "isabella.morales@email.com",
+    "rol": "Cliente",
+    "favoritos": ["receta18", "receta19"],
+    "fechaCreacion": "2025-09-30T11:25:30Z"
+  },
+  "usuario11": {
+    "nombre": "Miguel Castillo",
+    "correo": "miguel.castillo@email.com",
+    "rol": "Cliente",
+    "favoritos": ["receta21", "receta23", "receta25"],
+    "fechaCreacion": "2025-06-18T15:40:20Z"
+  },
+  "usuario12": {
+    "nombre": "Camila Sánchez",
+    "correo": "camila.sanchez@email.com",
+    "rol": "Cliente",
+    "favoritos": ["receta22", "receta24"],
+    "fechaCreacion": "2025-10-05T13:15:00Z"
+  },
+  "usuario13": {
+    "nombre": "Javier Méndez",
+    "correo": "javier.mendez@email.com",
+    "rol": "Cliente",
+    "favoritos": ["receta26", "receta28", "receta30"],
+    "fechaCreacion": "2025-08-20T17:30:45Z"
+  },
+  "usuario14": {
+    "nombre": "Lucía Vargas",
+    "correo": "lucia.vargas@email.com",
+    "rol": "Cliente",
+    "favoritos": ["receta27", "receta29"],
+    "fechaCreacion": "2025-09-08T10:05:30Z"
+  },
+  "usuario15": {
+    "nombre": "Roberto Guzmán",
+    "correo": "roberto.guzman@email.com",
+    "rol": "Cliente",
+    "favoritos": ["receta1", "receta11", "receta21"],
+    "fechaCreacion": "2025-07-14T14:20:15Z"
+  },
+  "usuario16": {
+    "nombre": "Daniela Cruz",
+    "correo": "daniela.cruz@email.com",
+    "rol": "Cliente",
+    "favoritos": ["receta4", "receta12", "receta18"],
+    "fechaCreacion": "2025-10-10T16:45:00Z"
+  },
+  "usuario17": {
+    "nombre": "Fernando Ortiz",
+    "correo": "fernando.ortiz@email.com",
+    "rol": "Cliente",
+    "favoritos": ["receta5", "receta15", "receta25"],
+    "fechaCreacion": "2025-06-25T12:00:30Z"
+  },
+  "usuario18": {
+    "nombre": "Paula Jiménez",
+    "correo": "paula.jimenez@email.com",
+    "rol": "Cliente",
+    "favoritos": ["receta8", "receta13", "receta20"],
+    "fechaCreacion": "2025-10-22T19:30:15Z"
+  },
+  "usuario19": {
+    "nombre": "Sebastián Rojas",
+    "correo": "sebastian.rojas@email.com",
+    "rol": "Cliente",
+    "favoritos": ["receta9", "receta16", "receta23"],
+    "fechaCreacion": "2025-08-12T08:15:45Z"
+  },
+  "usuario20": {
+    "nombre": "Gabriela Medina",
+    "correo": "gabriela.medina@email.com",
+    "rol": "Cliente",
+    "favoritos": ["receta6", "receta14", "receta22", "receta28"],
+    "fechaCreacion": "2025-09-19T21:10:00Z"
+  }
+}
