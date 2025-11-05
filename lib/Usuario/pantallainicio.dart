@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:tortilla_digital/Usuario/pantallaConfiguracion.dart';
+
 import 'package:tortilla_digital/login_page.dart';
 // import 'upload_recetas.dart';
 import '../recipe_detail_screen.dart'; // 👈 Import agregado
@@ -20,7 +22,7 @@ class PantallaInicio extends StatelessWidget {
       routes: {
         '/favorites': (context) => const LoginPage(),
         '/my-meals': (context) => const MyMealsScreen(),
-        '/settings': (context) => const Pantallaconfiguracion(),
+        '/settings': (context) => const PantallaConfiguracion(),
       },
     );
   }
