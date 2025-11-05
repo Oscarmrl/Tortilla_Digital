@@ -94,7 +94,7 @@ class Pantallaconfiguracion extends StatelessWidget {
                         color: Colors.white70,
                       ),
                       title: const Text(
-                        'Info.',
+                        'Recetas Favoritas.',
                         style: TextStyle(color: Colors.white70),
                       ),
                       subtitle: Text(
@@ -109,7 +109,7 @@ class Pantallaconfiguracion extends StatelessWidget {
                     ListTile(
                       leading: const Icon(Icons.phone, color: Colors.white70),
                       title: const Text(
-                        'Teléfono',
+                        'Correo Electrónico',
                         style: TextStyle(color: Colors.white70),
                       ),
                       subtitle: const Text(
