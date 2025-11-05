@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "498037161519",
+    "project_id": "miappmovil2",
+    "storage_bucket": "miappmovil2.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:498037161519:android:efc2c6013d4e12f933d0da",
+        "android_client_info": {
+          "package_name": "com.example.firebase"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAMlFEX-2OnOihwSkShaakyhPteduy9YeI"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:498037161519:android:bfbe4258c5b65e1f33d0da",
+        "android_client_info": {
+          "package_name": "com.example.tortilla_digital"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAMlFEX-2OnOihwSkShaakyhPteduy9YeI"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

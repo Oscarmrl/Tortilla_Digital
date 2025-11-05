@@ -1,8 +1,15 @@
+// main.dart
 import 'package:flutter/material.dart';
+<<<<<<< HEAD
 import 'login_page.dart';
+=======
+import 'package:tortilla_digital/Usuario/pantallainicio.dart';
+>>>>>>> 2121954955a2cdd42077bb6a10c401005911fa3d
 
-// Esta es la rama Dev
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
 
+<<<<<<< HEAD
 void main() {
   runApp(const MyApp());
 }
@@ -37,4 +44,7 @@ class MyApp extends StatelessWidget {
       home: const LoginPage(), // 👈 Aquí llamamos directamente al LoginPage
     );
   }
+=======
+  runApp(const PantallaInicio());
+>>>>>>> 2121954955a2cdd42077bb6a10c401005911fa3d
 }
