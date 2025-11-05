@@ -1,5 +1,9 @@
-﻿import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:firebase_storage/firebase_storage.dart';
+import 'dart:io';
+import 'package:path/path.dart' as path;
 
 class PantallaConfiguracion extends StatefulWidget {
   final String userId;
@@ -20,6 +24,7 @@ class _PantallaConfiguracionState extends State<PantallaConfiguracion> {
         .doc(widget.userId);
   }
 
+  /// ✅ Convierte Timestamp a texto legible
   String _formatTimestamp(dynamic ts) {
     if (ts == null) return '';
     DateTime dateTime;
@@ -33,6 +38,7 @@ class _PantallaConfiguracionState extends State<PantallaConfiguracion> {
     return '${dateTime.day}/${dateTime.month}/${dateTime.year} ${dateTime.hour}:${dateTime.minute}:${dateTime.second}';
   }
 
+  /// ✅ Editar un campo de texto (nombre, etc.)
   Future<void> _editField(String field, String currentValue) async {
     final controller = TextEditingController(text: currentValue);
     final result = await showDialog<String?>(
@@ -56,7 +62,7 @@ class _PantallaConfiguracionState extends State<PantallaConfiguracion> {
       ),
     );
 
-    if (result != null) {
+    if (result != null && result.isNotEmpty) {
       try {
         await _docRef.update({field: result});
         if (mounted) {
@@ -74,11 +80,88 @@ class _PantallaConfiguracionState extends State<PantallaConfiguracion> {
     }
   }
 
+  /// ✅ Mostrar opciones de cámara o galería
+  Future<void> _showImagePickerOptions() async {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (context) {
+        return SafeArea(
+          child: Wrap(
+            children: [
+              ListTile(
+                leading: Icon(Icons.camera_alt, color: Colors.grey[700]),
+                title: const Text(
+                  'Tomar foto',
+                  style: TextStyle(color: Colors.black87),
+                ),
+                onTap: () {
+                  Navigator.of(context).pop();
+                  _pickAndUploadImage(ImageSource.camera);
+                },
+              ),
+              ListTile(
+                leading: Icon(Icons.photo_library, color: Colors.grey[700]),
+                title: const Text(
+                  'Elegir desde galería',
+                  style: TextStyle(color: Colors.black87),
+                ),
+                onTap: () {
+                  Navigator.of(context).pop();
+                  _pickAndUploadImage(ImageSource.gallery);
+                },
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  /// ✅ Tomar/Seleccionar imagen y subir a Firebase Storage
+  Future<void> _pickAndUploadImage(ImageSource source) async {
+    final picker = ImagePicker();
+    final pickedFile = await picker.pickImage(source: source);
+
+    if (pickedFile == null) return;
+
+    try {
+      final file = File(pickedFile.path);
+      final fileName = path.basename(pickedFile.path);
+
+      final ref = FirebaseStorage.instance
+          .ref()
+          .child('usuarios')
+          .child('${widget.userId}/$fileName');
+
+      await ref.putFile(file);
+      final downloadUrl = await ref.getDownloadURL();
+
+      await _docRef.update({'imagen': downloadUrl});
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Foto actualizada con éxito')),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Error al subir imagen: $e')));
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    final background = const Color(0xFF0F0F0F);
-    final cardBackground = const Color(0xFF121212);
-    final accent = const Color(0xFF1DB954);
+    final background = Colors.white;
+    final cardBackground = Colors.white;
+    final accent = const Color(0xFFFFC107); // amber
+    final surface = const Color(0xFFF5F5F5);
 
     return Scaffold(
       backgroundColor: background,
@@ -86,10 +169,13 @@ class _PantallaConfiguracionState extends State<PantallaConfiguracion> {
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
+          icon: const Icon(Icons.arrow_back, color: Colors.black87),
           onPressed: () => Navigator.of(context).maybePop(),
         ),
-        title: const Text('Perfil'),
+        title: const Text(
+          'Perfil',
+          style: TextStyle(color: Colors.black87, fontWeight: FontWeight.w600),
+        ),
       ),
       body: SafeArea(
         child: StreamBuilder<DocumentSnapshot>(
@@ -114,16 +200,15 @@ class _PantallaConfiguracionState extends State<PantallaConfiguracion> {
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   const SizedBox(height: 8),
-                  // Avatar + Editar
                   Center(
                     child: Column(
                       children: [
                         CircleAvatar(
                           radius: 64,
-                          backgroundColor: Colors.white24,
+                          backgroundColor: surface,
                           child: CircleAvatar(
                             radius: 60,
-                            backgroundColor: cardBackground,
+                            backgroundColor: Colors.grey[200],
                             child: ClipOval(
                               child: SizedBox(
                                 width: 110,
@@ -132,17 +217,16 @@ class _PantallaConfiguracionState extends State<PantallaConfiguracion> {
                                     ? Image.network(
                                         imagen,
                                         fit: BoxFit.cover,
-                                        errorBuilder: (_, __, ___) =>
-                                            const Icon(
-                                              Icons.person,
-                                              size: 56,
-                                              color: Colors.white70,
-                                            ),
+                                        errorBuilder: (_, __, ___) => Icon(
+                                          Icons.person,
+                                          size: 56,
+                                          color: Colors.grey[600],
+                                        ),
                                       )
-                                    : const Icon(
+                                    : Icon(
                                         Icons.person,
                                         size: 56,
-                                        color: Colors.white70,
+                                        color: Colors.grey[600],
                                       ),
                               ),
                             ),
@@ -150,69 +234,76 @@ class _PantallaConfiguracionState extends State<PantallaConfiguracion> {
                         ),
                         const SizedBox(height: 8),
                         TextButton(
-                          onPressed: () => _editField('imagen', imagen),
+                          onPressed: _showImagePickerOptions,
                           child: Text(
-                            'Editar',
-                            style: TextStyle(color: accent),
+                            'Cambiar foto',
+                            style: TextStyle(
+                              color: accent,
+                              fontWeight: FontWeight.w600,
+                            ),
                           ),
                         ),
                       ],
                     ),
                   ),
-
                   const SizedBox(height: 18),
-
-                  // Card / secciones
                   Container(
                     decoration: BoxDecoration(
                       color: cardBackground,
                       borderRadius: BorderRadius.circular(8),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black12,
+                          blurRadius: 8,
+                          offset: Offset(0, 2),
+                        ),
+                      ],
                     ),
                     child: Column(
                       children: [
                         ListTile(
-                          leading: const Icon(
+                          leading: Icon(
                             Icons.person_outline,
-                            color: Colors.white70,
+                            color: Colors.grey[700],
                           ),
                           title: const Text(
                             'Nombre',
-                            style: TextStyle(color: Colors.white70),
+                            style: TextStyle(color: Colors.grey),
                           ),
                           subtitle: Text(
                             nombre,
-                            style: const TextStyle(color: Colors.white),
+                            style: const TextStyle(color: Colors.black87),
                           ),
                           onTap: () => _editField('nombre', nombre),
                         ),
-                        const Divider(height: 1, color: Colors.white12),
+                        const Divider(height: 1, color: Color(0xFFECECEC)),
                         ListTile(
-                          leading: const Icon(
+                          leading: Icon(
                             Icons.email_outlined,
-                            color: Colors.white70,
+                            color: Colors.grey[700],
                           ),
                           title: const Text(
                             'Correo',
-                            style: TextStyle(color: Colors.white70),
+                            style: TextStyle(color: Colors.grey),
                           ),
                           subtitle: Text(
                             correo,
-                            style: const TextStyle(color: Colors.white),
+                            style: const TextStyle(color: Colors.black87),
                           ),
                         ),
-                        const Divider(height: 1, color: Colors.white12),
+                        const Divider(height: 1, color: Color(0xFFECECEC)),
                         ListTile(
-                          leading: const Icon(
+                          leading: Icon(
                             Icons.calendar_today,
-                            color: Colors.white70,
+                            color: Colors.grey[700],
                           ),
                           title: const Text(
                             'Fecha de creación',
-                            style: TextStyle(color: Colors.white70),
+                            style: TextStyle(color: Colors.grey),
                           ),
                           subtitle: Text(
                             fechaCreacion,
-                            style: const TextStyle(color: Colors.white),
+                            style: const TextStyle(color: Colors.black87),
                           ),
                         ),
                       ],
