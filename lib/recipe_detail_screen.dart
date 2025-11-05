@@ -49,7 +49,7 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
                           begin: Alignment.topCenter,
                           end: Alignment.bottomCenter,
                           colors: [
-                            Colors.black.withOpacity(0.3),
+                            Colors.black.withValues(alpha: 0.03),
                             Colors.transparent,
                             Colors.white,
                           ],
@@ -217,7 +217,7 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
                   shape: BoxShape.circle,
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withOpacity(0.2),
+                      color: Colors.black.withValues(alpha: 0.02),
                       blurRadius: 8,
                       offset: const Offset(0, 2),
                     ),
@@ -249,7 +249,7 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
                   shape: BoxShape.circle,
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withOpacity(0.2),
+                      color: Colors.black.withValues(alpha: 0.02),
                       blurRadius: 8,
                       offset: const Offset(0, 2),
                     ),
