@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:tortilla_digital/register_page.dart';
 
+//Login Page
 class LoginPage extends StatelessWidget {
   const LoginPage({super.key});
 
