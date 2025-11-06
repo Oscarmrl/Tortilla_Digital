@@ -4,7 +4,7 @@ import 'package:tortilla_digital/login_page.dart';
 import '../recipe_detail_screen.dart'; // 👈 Import agregado
 
 class PantallaInicio extends StatelessWidget {
-  const PantallaInicio({Key? key}) : super(key: key);
+  const PantallaInicio({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -15,7 +15,7 @@ class PantallaInicio extends StatelessWidget {
 }
 
 class HomeScreen extends StatefulWidget {
-  const HomeScreen({Key? key}) : super(key: key);
+  const HomeScreen({super.key});
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
@@ -204,7 +204,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 color: Colors.white,
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.05),
+                    color: Colors.black.withValues(alpha: 0.05),
                     blurRadius: 10,
                     offset: const Offset(0, -5),
                   ),
@@ -341,7 +341,7 @@ class _HomeScreenState extends State<HomeScreen> {
           color: Colors.white,
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.08),
+              color: Colors.black.withValues(alpha: 0.08),
               blurRadius: 10,
               offset: const Offset(0, 4),
             ),
@@ -444,7 +444,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
 // Pantallas secundarias
 class MyMealsScreen extends StatelessWidget {
-  const MyMealsScreen({Key? key}) : super(key: key);
+  const MyMealsScreen({super.key});
 
   @override
   Widget build(BuildContext context) => Scaffold(
@@ -454,7 +454,7 @@ class MyMealsScreen extends StatelessWidget {
 }
 
 class SettingsScreen extends StatelessWidget {
-  const SettingsScreen({Key? key}) : super(key: key);
+  const SettingsScreen({super.key});
 
   @override
   Widget build(BuildContext context) => Scaffold(
