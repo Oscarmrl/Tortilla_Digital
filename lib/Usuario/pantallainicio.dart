@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:tortilla_digital/login_page.dart';
-// import 'upload_recetas.dart';
+//import 'upload_recetas.dart';
 import '../recipe_detail_screen.dart'; // 👈 Import agregado
 
 class PantallaInicio extends StatelessWidget {
@@ -8,21 +8,9 @@ class PantallaInicio extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Recipe App',
-      debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        primarySwatch: Colors.amber,
-        scaffoldBackgroundColor: const Color(0xFFF5F5F5),
-        fontFamily: 'Roboto',
-      ),
-      home: const HomeScreen(),
-      routes: {
-        '/favorites': (context) => const LoginPage(),
-        '/my-meals': (context) => const MyMealsScreen(),
-        '/settings': (context) => const SettingsScreen(),
-      },
-    );
+    // ❌ Eliminamos el MaterialApp aquí
+    // ✅ Solo devolvemos directamente el Scaffold principal
+    return const HomeScreen();
   }
 }
 
@@ -167,7 +155,6 @@ class _HomeScreenState extends State<HomeScreen> {
                       ),
                       const SizedBox(height: 28),
 
-                      // Popular Recipes Title
                       const Text(
                         'Popular Recipes',
                         style: TextStyle(
@@ -177,7 +164,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       ),
                       const SizedBox(height: 16),
 
-                      // Recipe Cards Grid
+                      // Recipe Grid
                       GridView.count(
                         shrinkWrap: true,
                         physics: const NeverScrollableScrollPhysics(),
@@ -244,7 +231,12 @@ class _HomeScreenState extends State<HomeScreen> {
                     isSelected: _selectedIndex == 1,
                     onTap: () {
                       setState(() => _selectedIndex = 1);
-                      Navigator.pushNamed(context, '/favorites');
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const LoginPage(),
+                        ),
+                      );
                     },
                   ),
                   _buildBottomNavItem(
@@ -253,7 +245,12 @@ class _HomeScreenState extends State<HomeScreen> {
                     isSelected: _selectedIndex == 2,
                     onTap: () {
                       setState(() => _selectedIndex = 2);
-                      Navigator.pushNamed(context, '/my-meals');
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const MyMealsScreen(),
+                        ),
+                      );
                     },
                   ),
                   _buildBottomNavItem(
@@ -262,7 +259,12 @@ class _HomeScreenState extends State<HomeScreen> {
                     isSelected: _selectedIndex == 3,
                     onTap: () {
                       setState(() => _selectedIndex = 3);
-                      Navigator.pushNamed(context, '/settings');
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const SettingsScreen(),
+                        ),
+                      );
                     },
                   ),
                 ],
@@ -273,6 +275,8 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
     );
   }
+
+  // Métodos auxiliares 👇
 
   Widget _buildCategoryIcon({
     required IconData icon,
@@ -317,7 +321,6 @@ class _HomeScreenState extends State<HomeScreen> {
     required String time,
   }) {
     return GestureDetector(
-      // 👇 NAVEGACIÓN AGREGADA AQUÍ
       onTap: () {
         Navigator.push(
           context,
@@ -347,69 +350,16 @@ class _HomeScreenState extends State<HomeScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Stack(
-              children: [
-                ClipRRect(
-                  borderRadius: const BorderRadius.only(
-                    topLeft: Radius.circular(20),
-                    topRight: Radius.circular(20),
-                  ),
-                  child: Image.network(
-                    imageUrl,
-                    height: 140,
-                    width: double.infinity,
-                    fit: BoxFit.cover,
-                  ),
-                ),
-                Positioned(
-                  top: 12,
-                  left: 12,
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 8,
-                      vertical: 4,
-                    ),
-                    decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.9),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Row(
-                      children: [
-                        const Icon(Icons.access_time, size: 14),
-                        const SizedBox(width: 4),
-                        Text(time, style: const TextStyle(fontSize: 11)),
-                      ],
-                    ),
-                  ),
-                ),
-                Positioned(
-                  bottom: 12,
-                  right: 12,
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 8,
-                      vertical: 4,
-                    ),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFFFC107),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Row(
-                      children: [
-                        const Icon(Icons.star, size: 14, color: Colors.black),
-                        const SizedBox(width: 4),
-                        Text(
-                          rating.toString(),
-                          style: const TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ],
+            ClipRRect(
+              borderRadius: const BorderRadius.vertical(
+                top: Radius.circular(20),
+              ),
+              child: Image.network(
+                imageUrl,
+                height: 140,
+                width: double.infinity,
+                fit: BoxFit.cover,
+              ),
             ),
             Padding(
               padding: const EdgeInsets.all(12),
@@ -492,48 +442,23 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 }
 
-// Pantallas de destino
-class FavoritesScreen extends StatelessWidget {
-  const FavoritesScreen({Key? key}) : super(key: key);
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Favoritos'),
-        backgroundColor: const Color(0xFFFFC107),
-      ),
-      body: const Center(child: Text('Pantalla de Favoritos')),
-    );
-  }
-}
-
+// Pantallas secundarias
 class MyMealsScreen extends StatelessWidget {
   const MyMealsScreen({Key? key}) : super(key: key);
 
   @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Mis Comidas'),
-        backgroundColor: const Color(0xFFFFC107),
-      ),
-      body: const Center(child: Text('Pantalla de Mis Comidas')),
-    );
-  }
+  Widget build(BuildContext context) => Scaffold(
+    appBar: AppBar(title: const Text('Mis Comidas')),
+    body: const Center(child: Text('Pantalla de Mis Comidas')),
+  );
 }
 
 class SettingsScreen extends StatelessWidget {
   const SettingsScreen({Key? key}) : super(key: key);
 
   @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Ajustes'),
-        backgroundColor: const Color(0xFFFFC107),
-      ),
-      body: const Center(child: Text('Pantalla de Ajustes')),
-    );
-  }
+  Widget build(BuildContext context) => Scaffold(
+    appBar: AppBar(title: const Text('Ajustes')),
+    body: const Center(child: Text('Pantalla de Ajustes')),
+  );
 }
