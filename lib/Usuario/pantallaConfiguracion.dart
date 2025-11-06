@@ -7,7 +7,7 @@ import 'package:path/path.dart' as path;
 
 class PantallaConfiguracion extends StatefulWidget {
   final String userId;
-  const PantallaConfiguracion({super.key, this.userId = 'usuario11'});
+  const PantallaConfiguracion({super.key, this.userId = 'usuario10'});
 
   @override
   State<PantallaConfiguracion> createState() => _PantallaConfiguracionState();
