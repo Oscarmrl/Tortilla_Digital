@@ -13,7 +13,11 @@ import 'package:tortilla_digital/Usuario/pantallainicio.dart';
 void main() {
   testWidgets('Counter increments smoke test', (WidgetTester tester) async {
     // Build our app and trigger a frame.
-    await tester.pumpWidget(const PantallaInicio());
+    await tester.pumpWidget(
+      const MaterialApp(
+        home: PantallaInicio(nombreUsuario: 'Usuario de prueba'),
+      ),
+    );
 
     // Verify that our counter starts at 0.
     expect(find.text('0'), findsOneWidget);
