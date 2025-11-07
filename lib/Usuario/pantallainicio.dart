@@ -1,21 +1,26 @@
 import 'package:flutter/material.dart';
+import 'package:tortilla_digital/Usuario/pantalla_configuracion.dart';
 import 'package:tortilla_digital/login_page.dart';
 //import 'upload_recetas.dart';
 import '../recipe_detail_screen.dart'; // 👈 Import agregado
 
 class PantallaInicio extends StatelessWidget {
-  const PantallaInicio({super.key});
+  final String userId;
+
+  const PantallaInicio({super.key, required this.userId});
 
   @override
   Widget build(BuildContext context) {
     // ❌ Eliminamos el MaterialApp aquí
     // ✅ Solo devolvemos directamente el Scaffold principal
-    return const HomeScreen();
+    return HomeScreen(userId: userId);
   }
 }
 
 class HomeScreen extends StatefulWidget {
-  const HomeScreen({super.key});
+  final String userId; // ✅ parámetro obligatorio
+
+  const HomeScreen({super.key, required this.userId});
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
@@ -262,7 +267,8 @@ class _HomeScreenState extends State<HomeScreen> {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (context) => const SettingsScreen(),
+                          builder: (context) =>
+                              PantallaConfiguracion(userId: widget.userId),
                         ),
                       );
                     },
