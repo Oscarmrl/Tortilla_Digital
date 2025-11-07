@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:tortilla_digital/Usuario/pantalla_configuracion.dart';
+import 'package:tortilla_digital/Usuario/pantalla_tus_comidas.dart';
 import 'package:tortilla_digital/login_page.dart';
 //import 'upload_recetas.dart';
 import '../recipe_detail_screen.dart'; // 👈 Import agregado
@@ -253,7 +254,8 @@ class _HomeScreenState extends State<HomeScreen> {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (context) => const MyMealsScreen(),
+                          builder: (context) =>
+                              MisComidasScreen(userId: widget.userId),
                         ),
                       );
                     },
