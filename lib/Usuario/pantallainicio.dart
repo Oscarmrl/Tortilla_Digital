@@ -4,7 +4,13 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 
 class PantallaInicio extends StatefulWidget {
   final String nombreUsuario;
-  const PantallaInicio({super.key, required this.nombreUsuario});
+  final String userId;
+
+  const PantallaInicio({
+    super.key,
+    required this.nombreUsuario,
+    required this.userId,
+  });
 
   @override
   State<PantallaInicio> createState() => _PantallaInicioState();
