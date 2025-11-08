@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:tortilla_digital/admin_home.dart';
 import 'package:tortilla_digital/login_page.dart';
+import 'package:tortilla_digital/nuevo_admin.dart';
 import '../recipe_detail_screen.dart';
 import 'miscomidas.dart';
 
@@ -356,7 +358,7 @@ class _PantallaInicioState extends State<PantallaInicio> {
                     isSelected: _selectedIndex == 1,
                     onTap: () {
                       setState(() => _selectedIndex = 1);
-                      Get.to(() => const LoginPage());
+                      Get.to(() => const AdminHomeScreen());
                     },
                   ),
                   _buildBottomNavItem(
@@ -365,7 +367,7 @@ class _PantallaInicioState extends State<PantallaInicio> {
                     isSelected: _selectedIndex == 2,
                     onTap: () {
                       setState(() => _selectedIndex = 2);
-                      Get.to(() => const Miscomidas());
+                      Get.to(() => const NuevoAdminScreen());
                     },
                   ),
                   _buildBottomNavItem(
