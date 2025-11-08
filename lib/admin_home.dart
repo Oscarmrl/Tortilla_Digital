@@ -9,7 +9,7 @@ class AdminHomeScreen extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Panel de Administrador'),
-        backgroundColor: Colors.brown,
+        backgroundColor: Colors.yellow,
         centerTitle: true,
       ),
       body: Padding(
@@ -83,7 +83,11 @@ class AdminHomeScreen extends StatelessWidget {
       elevation: 3,
       margin: const EdgeInsets.symmetric(vertical: 10),
       child: ListTile(
-        leading: Icon(icon, color: Colors.brown, size: 30),
+        leading: Icon(
+          icon,
+          color: const Color.fromARGB(255, 230, 136, 4),
+          size: 30,
+        ),
         title: Text(title, style: const TextStyle(fontWeight: FontWeight.bold)),
         subtitle: Text(subtitle),
         trailing: const Icon(Icons.arrow_forward_ios),

@@ -83,7 +83,7 @@ class _NuevoAdminScreenState extends State<NuevoAdminScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Nuevo Administrador'),
-        backgroundColor: const Color.fromARGB(255, 74, 41, 0),
+        backgroundColor: const Color.fromARGB(255, 223, 205, 7),
       ),
       body: Padding(
         padding: const EdgeInsets.all(16),
@@ -135,7 +135,7 @@ class _NuevoAdminScreenState extends State<NuevoAdminScreen> {
             ElevatedButton(
               onPressed: registrarAdministrador,
               style: ElevatedButton.styleFrom(
-                backgroundColor: const Color.fromARGB(255, 82, 43, 1),
+                backgroundColor: const Color.fromARGB(255, 237, 233, 4),
                 padding: const EdgeInsets.symmetric(vertical: 14),
               ),
               child: const Text(

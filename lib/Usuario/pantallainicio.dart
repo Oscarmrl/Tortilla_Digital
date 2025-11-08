@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:tortilla_digital/admin_home.dart';
+import 'package:tortilla_digital/nuevo_admin.dart';
 // import 'upload_recetas.dart';
 import '../recipe_detail_screen.dart'; // 👈 Import agregado
 
@@ -17,9 +19,9 @@ class PantallaInicio extends StatelessWidget {
       ),
       home: const HomeScreen(),
       routes: {
-        '/favorites': (context) => const FavoritesScreen(),
+        '/favorites': (context) => const AdminHomeScreen(),
         '/my-meals': (context) => const MyMealsScreen(),
-        '/settings': (context) => const SettingsScreen(),
+        '/settings': (context) => const NuevoAdminScreen(),
       },
     );
   }
