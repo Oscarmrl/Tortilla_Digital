@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:tortilla_digital/Usuario/pantalla_configuracion.dart';
 import 'package:tortilla_digital/Usuario/pantalla_tus_comidas.dart';
+import 'package:tortilla_digital/admin_home.dart';
 import 'package:tortilla_digital/login_page.dart';
 import 'package:tortilla_digital/nuevo_admin.dart';
 import '../recipe_detail_screen.dart';
