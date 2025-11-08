@@ -61,7 +61,7 @@ class _LoginPageState extends State<LoginPage> {
         Get.offNamed('/adminPage');
       } else {
         // Navegación con paso de parámetro usando Get
-        Get.off(() => PantallaInicio(nombreUsuario: nombre));
+        Get.off(() => PantallaInicio(nombreUsuario: nombre, userId: uid));
       }
     } on FirebaseAuthException catch (e) {
       String errorMsg = "Error al iniciar sesión";

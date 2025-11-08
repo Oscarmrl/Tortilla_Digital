@@ -1,13 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:tortilla_digital/Usuario/pantalla_configuracion.dart';
+import 'package:tortilla_digital/Usuario/pantalla_tus_comidas.dart';
 import 'package:tortilla_digital/login_page.dart';
 import '../recipe_detail_screen.dart';
-import 'miscomidas.dart';
 
 class PantallaInicio extends StatefulWidget {
   final String nombreUsuario;
-  const PantallaInicio({super.key, required this.nombreUsuario});
+  final String userId;
+
+  const PantallaInicio({
+    super.key,
+    required this.nombreUsuario,
+    required this.userId,
+  });
 
   @override
   State<PantallaInicio> createState() => _PantallaInicioState();
@@ -365,7 +372,7 @@ class _PantallaInicioState extends State<PantallaInicio> {
                     isSelected: _selectedIndex == 2,
                     onTap: () {
                       setState(() => _selectedIndex = 2);
-                      Get.to(() => const Miscomidas());
+                      Get.to(() => MisComidasScreen(userId: widget.userId));
                     },
                   ),
                   _buildBottomNavItem(
@@ -374,7 +381,9 @@ class _PantallaInicioState extends State<PantallaInicio> {
                     isSelected: _selectedIndex == 3,
                     onTap: () {
                       setState(() => _selectedIndex = 3);
-                      Get.to(() => const SettingsScreen());
+                      Get.to(
+                        () => PantallaConfiguracion(userId: widget.userId),
+                      );
                     },
                   ),
                 ],
