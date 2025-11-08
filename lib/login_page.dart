@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:tortilla_digital/Usuario/pantallainicio.dart';
 import 'package:tortilla_digital/register_page.dart';
+import 'package:tortilla_digital/Usuario/pantallainicio.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -21,8 +22,7 @@ class _LoginPageState extends State<LoginPage> {
   @override
   void initState() {
     super.initState();
-    _auth = FirebaseAuth
-        .instance; // ✅ Solo se usa después de Firebase.initializeApp()
+    _auth = FirebaseAuth.instance;
   }
 
   Future<void> _login() async {
@@ -37,7 +37,6 @@ class _LoginPageState extends State<LoginPage> {
     try {
       setState(() => _loading = true);
 
-      // 🔹 Inicia sesión con Firebase Auth
       UserCredential userCredential = await _auth.signInWithEmailAndPassword(
         email: email,
         password: password,
@@ -45,29 +44,24 @@ class _LoginPageState extends State<LoginPage> {
 
       final uid = userCredential.user!.uid;
 
-      // 🔹 Busca el documento del usuario en Firestore
       final userDoc = await FirebaseFirestore.instance
           .collection('usuarios')
           .doc(uid)
           .get();
 
       if (!userDoc.exists) {
-        _showMessage(
-          "No se encontró información del usuario en la base de datos",
-        );
+        _showMessage("No se encontró información del usuario");
         return;
       }
 
       final rol = userDoc.data()!['rol'];
+      final nombre = userDoc.data()?['nombre'] ?? 'Usuario';
 
-      // 🔹 Redirigir según el rol
       if (rol == 'Admin') {
-        Navigator.pushReplacementNamed(context, '/adminPage');
+        Get.offNamed('/adminPage');
       } else {
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => PantallaInicio(userId: uid)),
-        );
+        // Navegación con paso de parámetro usando Get
+        Get.off(() => PantallaInicio(nombreUsuario: nombre));
       }
     } on FirebaseAuthException catch (e) {
       String errorMsg = "Error al iniciar sesión";
@@ -85,8 +79,12 @@ class _LoginPageState extends State<LoginPage> {
   }
 
   void _showMessage(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message), backgroundColor: Colors.redAccent),
+    Get.snackbar(
+      'Aviso',
+      message,
+      backgroundColor: Colors.redAccent,
+      colorText: Colors.white,
+      snackPosition: SnackPosition.BOTTOM,
     );
   }
 
@@ -132,7 +130,6 @@ class _LoginPageState extends State<LoginPage> {
                   ),
                 ),
                 const SizedBox(height: 20),
-
                 Container(
                   decoration: const BoxDecoration(
                     color: Color(0xFF3C814E),
@@ -194,8 +191,6 @@ class _LoginPageState extends State<LoginPage> {
                         ],
                       ),
                       const SizedBox(height: 8),
-
-                      // 🔹 Botón de inicio de sesión
                       SizedBox(
                         width: double.infinity,
                         child: ElevatedButton(
@@ -221,73 +216,26 @@ class _LoginPageState extends State<LoginPage> {
                                 ),
                         ),
                       ),
-
                       const SizedBox(height: 10),
                       const Text(
-                        'Conectar con:',
+                        '¿No tienes cuenta?',
                         style: TextStyle(color: Colors.white),
                       ),
-                      const SizedBox(height: 8),
-
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.all(4),
-                            decoration: const BoxDecoration(
-                              color: Colors.white,
-                              shape: BoxShape.circle,
-                            ),
-                            child: const Icon(
-                              Icons.g_mobiledata,
-                              color: Colors.lightGreen,
-                              size: 28,
-                            ),
+                      const SizedBox(height: 6),
+                      OutlinedButton(
+                        onPressed: () => Get.to(() => const RegisterPage()),
+                        style: OutlinedButton.styleFrom(
+                          side: const BorderSide(color: Colors.white),
+                          backgroundColor: const Color(0xFF89B76F),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(20),
                           ),
-                          const SizedBox(width: 16),
-                          Container(
-                            padding: const EdgeInsets.all(4),
-                            decoration: const BoxDecoration(
-                              color: Colors.white,
-                              shape: BoxShape.circle,
-                            ),
-                            child: const Icon(
-                              Icons.facebook,
-                              color: Colors.lightGreen,
-                              size: 28,
-                            ),
-                          ),
-                        ],
-                      ),
-
-                      const SizedBox(height: 16),
-
-                      // 🔹 Botón de registro
-                      SizedBox(
-                        width: double.infinity,
-                        child: OutlinedButton(
-                          onPressed: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => const RegisterPage(),
-                              ),
-                            );
-                          },
-                          style: OutlinedButton.styleFrom(
-                            side: const BorderSide(color: Colors.white),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(20),
-                            ),
-                            padding: const EdgeInsets.symmetric(vertical: 12),
-                            backgroundColor: const Color(0xFF89B76F),
-                          ),
-                          child: const Text(
-                            'Registrarse',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontWeight: FontWeight.bold,
-                            ),
+                        ),
+                        child: const Text(
+                          'Registrarse',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
                           ),
                         ),
                       ),
