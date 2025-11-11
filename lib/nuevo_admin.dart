@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 class NuevoAdminScreen extends StatefulWidget {
-  const NuevoAdminScreen({super.key}); //Pantalla de nuevo administrador
+  const NuevoAdminScreen({super.key});
 
   @override
   State<NuevoAdminScreen> createState() => _NuevoAdminScreenState();
@@ -14,7 +14,7 @@ class _NuevoAdminScreenState extends State<NuevoAdminScreen> {
 
   bool _obscurePassword = true;
 
-  // Lista simulada de administradores registrados (no guardamos la contraseña en la vista)
+  // Lista simulada de administradores registrados
   List<Map<String, dynamic>> administradores = [
     {'nombre': 'Nabil Reyes', 'correo': 'nabil@correo.com', 'activo': true},
     {'nombre': 'Emma Torres', 'correo': 'emma@correo.com', 'activo': false},
