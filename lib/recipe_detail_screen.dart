@@ -1,19 +1,21 @@
 import 'package:flutter/material.dart';
 
 class RecipeDetailScreen extends StatefulWidget {
-  final String imageUrl;
+  final String imagenUrl;
   final String title;
   final String category;
   final double rating;
   final String time;
+  final List<String> ingredientes;
 
   const RecipeDetailScreen({
     super.key,
-    required this.imageUrl,
+    required this.imagenUrl,
     required this.title,
     required this.category,
     required this.rating,
     required this.time,
+    required this.ingredientes,
   });
 
   @override
@@ -37,7 +39,7 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
                 Stack(
                   children: [
                     Image.network(
-                      widget.imageUrl,
+                      widget.imagenUrl,
                       height: 400,
                       width: double.infinity,
                       fit: BoxFit.cover,
@@ -75,7 +77,7 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          // Title and Rating
+                          // titulo y rating
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             crossAxisAlignment: CrossAxisAlignment.start,
@@ -130,7 +132,7 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
                           ),
                           const SizedBox(height: 24),
 
-                          // Info Cards
+                          // Informacion Cards
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
@@ -167,13 +169,14 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
                             ),
                           ),
                           const SizedBox(height: 16),
-                          _buildIngredient('2 Eggs'),
-                          _buildIngredient('1 Cup All purpose flour'),
-                          _buildIngredient('1/2 Cup Whole milk'),
-                          _buildIngredient('2 Tablespoon Butter'),
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: widget.ingredientes
+                                .map((ing) => _buildIngredient(ing))
+                                .toList(),
+                          ),
                           const SizedBox(height: 32),
 
-                          // Directions Section
                           const Text(
                             'Directions',
                             style: TextStyle(
@@ -204,7 +207,7 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
             ),
           ),
 
-          // Back Button
+          // boton volver
           Positioned(
             top: 50,
             left: 20,

@@ -24,7 +24,7 @@ class _PantallaConfiguracionState extends State<PantallaConfiguracion> {
         .doc(widget.userId);
   }
 
-  /// ✅ Convierte Timestamp a texto legible
+  // Convierte Timestamp a texto legible
   String _formatTimestamp(dynamic ts) {
     if (ts == null) return '';
     DateTime dateTime;
@@ -38,7 +38,7 @@ class _PantallaConfiguracionState extends State<PantallaConfiguracion> {
     return '${dateTime.day}/${dateTime.month}/${dateTime.year} ${dateTime.hour}:${dateTime.minute}:${dateTime.second}';
   }
 
-  /// ✅ Editar un campo de texto (nombre, etc.)
+  //Editar un campo de texto (nombre, etc.)
   Future<void> _editField(String field, String currentValue) async {
     final controller = TextEditingController(text: currentValue);
     final result = await showDialog<String?>(
@@ -80,7 +80,7 @@ class _PantallaConfiguracionState extends State<PantallaConfiguracion> {
     }
   }
 
-  /// ✅ Mostrar opciones de cámara o galería
+  //  Mostrar opciones de cámara o galería
   Future<void> _showImagePickerOptions() async {
     showModalBottomSheet(
       context: context,
@@ -121,7 +121,7 @@ class _PantallaConfiguracionState extends State<PantallaConfiguracion> {
     );
   }
 
-  /// ✅ Tomar/Seleccionar imagen y subir a Firebase Storage
+  // Tomar/Seleccionar imagen y subir a Firebase Storage
   Future<void> _pickAndUploadImage(ImageSource source) async {
     final picker = ImagePicker();
     final pickedFile = await picker.pickImage(source: source);
