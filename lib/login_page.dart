@@ -70,7 +70,7 @@ class _LoginPageState extends State<LoginPage> {
         if (rol == 'Admin') {
           Get.off(() => const AdminHomeScreen());
         } else {
-          Get.off(() => PantallaInicio(nombreUsuario: nombre));
+          Get.off(() => PantallaInicio(nombreUsuario: nombre, userId: ''));
         }
         return;
       }
