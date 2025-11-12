@@ -16,6 +16,7 @@ dependencies:
   
   
   get: ^4.7.2
+  intl: ^0.18.1   # <-- Para manejar fechas
 
   # Firebase y servicios
   firebase_core: ^3.8.0
