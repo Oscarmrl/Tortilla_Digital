@@ -80,39 +80,146 @@ class _MisComidasScreenState extends State<MisComidasScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Mis Comidas')),
+      backgroundColor: const Color.fromARGB(255, 240, 233, 233),
+      appBar: AppBar(
+        backgroundColor: Color(0xFFFFC107),
+        title: const Text(
+          'Mis Comidas',
+          style: TextStyle(
+            color: Color.fromARGB(255, 0, 0, 0),
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        elevation: 0,
+      ),
       body: Column(
         children: [
-          ElevatedButton(
-            onPressed: () async {
-              // Simula agregar una receta con ID aleatorio
-              String recetaId =
-                  'receta${DateTime.now().millisecondsSinceEpoch}';
-              await agregarRecetaAlHistorial(recetaId);
-            },
-            child: const Text('Agregar receta al historial'),
+          Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: ElevatedButton(
+              onPressed: () async {
+                String recetaId =
+                    'receta${DateTime.now().millisecondsSinceEpoch}';
+                await agregarRecetaAlHistorial(recetaId);
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.amber,
+                foregroundColor: Colors.black,
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 24,
+                  vertical: 12,
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+              child: const Text(
+                'Agregar receta al historial',
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+              ),
+            ),
           ),
           Expanded(
             child: FutureBuilder<List<Map<String, dynamic>>>(
               future: obtenerHistorialOrdenado(),
               builder: (context, snapshot) {
                 if (snapshot.connectionState == ConnectionState.waiting) {
-                  return const Center(child: CircularProgressIndicator());
+                  return const Center(
+                    child: CircularProgressIndicator(
+                      valueColor: AlwaysStoppedAnimation<Color>(Colors.amber),
+                    ),
+                  );
                 }
                 if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                  return const Center(child: Text('No hay historial aún.'));
+                  return Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          Icons.restaurant_menu,
+                          size: 64,
+                          color: Colors.grey[700],
+                        ),
+                        const SizedBox(height: 16),
+                        Text(
+                          'No hay historial aún',
+                          style: TextStyle(
+                            color: Colors.grey[400],
+                            fontSize: 18,
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
                 }
 
                 final historial = snapshot.data!;
-                return ListView.builder(
+                return GridView.builder(
+                  padding: const EdgeInsets.all(16),
+                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: 2,
+                    childAspectRatio: 0.85,
+                    crossAxisSpacing: 16,
+                    mainAxisSpacing: 16,
+                  ),
                   itemCount: historial.length,
                   itemBuilder: (context, index) {
                     final receta = historial[index];
                     final id = receta['idReceta']?.toString() ?? '';
                     final fecha = _formatTimestamp(receta['fecha']);
-                    return ListTile(
-                      title: Text('Receta: $id'),
-                      subtitle: Text('Vista: $fecha'),
+                    return Card(
+                      elevation: 8,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      color: const Color.fromARGB(255, 73, 77, 22),
+                      child: InkWell(
+                        onTap: () {
+                          // Aquí puedes agregar la navegación a los detalles de la receta
+                        },
+                        borderRadius: BorderRadius.circular(16),
+                        child: Padding(
+                          padding: const EdgeInsets.all(16),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Container(
+                                height: 100,
+                                decoration: BoxDecoration(
+                                  color: Colors.amber,
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                child: const Center(
+                                  child: Icon(
+                                    Icons.restaurant,
+                                    size: 40,
+                                    color: Colors.black87,
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(height: 12),
+                              Text(
+                                'Receta: ${id.substring(6)}',
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                fecha,
+                                style: TextStyle(
+                                  color: Colors.grey[400],
+                                  fontSize: 14,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
                     );
                   },
                 );

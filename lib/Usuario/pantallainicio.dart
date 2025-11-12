@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:tortilla_digital/Usuario/pantalla_configuracion.dart';
+import 'package:tortilla_digital/Usuario/pantalla_mis_recetas.dart';
 import 'package:tortilla_digital/Usuario/pantalla_tus_comidas.dart';
 import 'package:tortilla_digital/admin_home.dart';
 import 'package:tortilla_digital/login_page.dart';
@@ -348,15 +349,11 @@ class _PantallaInicioState extends State<PantallaInicio> {
                   ),
                   _buildBottomNavItem(
                     icon: Icons.add_circle_outline,
-                    label: '',
-                    isAdd: true,
+                    label: 'Mis recetas',
+                    isSelected: _selectedIndex == 4,
                     onTap: () {
-                      Get.snackbar(
-                        'Función',
-                        'Aquí podrás subir una receta (próximamente)',
-                        snackPosition: SnackPosition.BOTTOM,
-                        backgroundColor: Colors.orange.shade100,
-                      );
+                      setState(() => _selectedIndex = 4);
+                      Get.to(() => const PantallaMisRecetas());
                     },
                   ),
                   _buildBottomNavItem(
