@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:tortilla_digital/Administrador/admin_home.dart';
 import 'package:tortilla_digital/register_page.dart';
 import 'package:tortilla_digital/Usuario/pantallainicio.dart';
 
@@ -44,23 +45,43 @@ class _LoginPageState extends State<LoginPage> {
 
       final uid = userCredential.user!.uid;
 
-      final userDoc = await FirebaseFirestore.instance
+      final userDocRef = FirebaseFirestore.instance
           .collection('usuarios')
-          .doc(uid)
-          .get();
+          .doc(uid);
+      final userDoc = await userDocRef.get();
 
       if (!userDoc.exists) {
-        _showMessage("No se encontró información del usuario");
+        // Backup: buscar por correo
+        final query = await FirebaseFirestore.instance
+            .collection('usuarios')
+            .where('correo', isEqualTo: email)
+            .limit(1)
+            .get();
+
+        if (query.docs.isEmpty) {
+          _showMessage("No se encontró información del usuario");
+          return;
+        }
+
+        final data = query.docs.first.data();
+        final rol = data['rol'];
+        final nombre = data['nombre'] ?? 'Usuario';
+
+        if (rol == 'Admin') {
+          Get.off(() => const AdminHomeScreen());
+        } else {
+          Get.off(() => PantallaInicio(nombreUsuario: nombre));
+        }
         return;
       }
 
-      final rol = userDoc.data()!['rol'];
-      final nombre = userDoc.data()?['nombre'] ?? 'Usuario';
+      final data = userDoc.data()!;
+      final rol = data['rol'];
+      final nombre = data['nombre'] ?? 'Usuario';
 
       if (rol == 'Admin') {
-        Get.offNamed('/adminPage');
+        Get.off(() => const AdminHomeScreen());
       } else {
-        // Navegación con paso de parámetro usando Get
         Get.off(() => PantallaInicio(nombreUsuario: nombre));
       }
     } on FirebaseAuthException catch (e) {

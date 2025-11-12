@@ -456,7 +456,6 @@ class _PantallaInicioState extends State<PantallaInicio> {
     );
   }
 
-  // ✅ Aquí está el nuevo método actualizado con imagen
   Widget _buildPlainCard({
     required String title,
     required String category,
@@ -611,18 +610,20 @@ class SettingsScreen extends StatelessWidget {
   const SettingsScreen({super.key});
 
   @override
-  Widget build(BuildContext context) => Scaffold(
-    appBar: AppBar(title: const Text('Ajustes')),
-    body: Center(
-      child: ElevatedButton.icon(
-        onPressed: () => Get.offAllNamed('/login'),
-        icon: const Icon(Icons.logout),
-        label: const Text('Cerrar sesión'),
-        style: ElevatedButton.styleFrom(
-          backgroundColor: Colors.orange,
-          foregroundColor: Colors.white,
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text('Ajustes')),
+      body: Center(
+        child: ElevatedButton.icon(
+          onPressed: () => Get.offAll(() => LoginPage()),
+          icon: const Icon(Icons.logout),
+          label: const Text('Cerrar sesión'),
+          style: ElevatedButton.styleFrom(
+            backgroundColor: Colors.orange,
+            foregroundColor: Colors.white,
+          ),
         ),
       ),
-    ),
-  );
+    );
+  }
 }
