@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
-// Helper to format Timestamps without adding a new package
 String _formatTimestamp(dynamic ts) {
   if (ts == null) return '';
   DateTime dateTime;

@@ -12,9 +12,7 @@ dependencies:
     sdk: flutter
 
   cupertino_icons: ^1.0.8
-  
-  
-  
+
   get: ^4.7.2
 
   # Firebase y servicios
@@ -36,3 +34,4 @@ flutter:
   assets:
     - assets/tortilla.png
     - assets/usuarios.json
+    - assets/avatar.png

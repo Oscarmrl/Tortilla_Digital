@@ -11,7 +11,7 @@ class AdminPage extends StatefulWidget {
 class _AdminPageState extends State<AdminPage> {
   final _auth = FirebaseAuth.instance;
 
-  // 🔹 Cierra sesión
+  // Cierra sesión
   Future<void> _logout() async {
     await _auth.signOut();
     Navigator.pushReplacementNamed(context, '/');
@@ -76,7 +76,7 @@ class _AdminPageState extends State<AdminPage> {
     );
   }
 
-  // 🔸 Widget reutilizable para las tarjetas del panel
+  // Widget reutilizable para las tarjetas del panel
   Widget _buildAdminCard({
     required IconData icon,
     required String title,

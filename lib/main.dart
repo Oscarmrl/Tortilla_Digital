@@ -12,7 +12,7 @@ import 'package:tortilla_digital/Usuario/admin_page.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // ✅ Inicializa Firebase correctamente
+  //Inicializa Firebase correctamente
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
 
   runApp(const MyApp());
@@ -31,10 +31,10 @@ class MyApp extends StatelessWidget {
         colorSchemeSeed: Colors.orangeAccent,
       ),
 
-      // ✅ Ruta inicial
+      //Ruta inicial
       initialRoute: '/login',
 
-      // ✅ Definición de rutas con GetX
+      // Definición de rutas con GetX
       getPages: [
         GetPage(name: '/login', page: () => const LoginPage()),
         GetPage(name: '/register', page: () => const RegisterPage()),

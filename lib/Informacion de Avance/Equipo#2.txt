@@ -1,0 +1,29 @@
+Equipo#2
+Nabil Reyes
+Jose Carlos Cueva Molina
+Oscar Alexander Murillo Oseguera
+Jose Daniel Diaz
+Emma Garcia
+
+Usuarios para ingresar 
+correo:e@gmail.com
+contraseña:123456
+admin
+correo:j@gmail.com
+contraseña:123456
+
+firebase
+->configuraciones de firebase
+->ya esta creada las colecciones
+->autetificacion por correo y contraseña
+->registro de usuario
+
+pantallas
+login y register
+pantalla de inicio bienvenida al usuario,recetas y barra de navegacion 
+ajuste del usuario 
+favoritos
+navegaciones y pasos de contextos con Get
+pantalla de historial de mis comidas
+
+
