@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'dart:io';
+import 'package:firebase_storage/firebase_storage.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class PantallaMisRecetas extends StatefulWidget {
   const PantallaMisRecetas({super.key});
@@ -27,6 +30,74 @@ class _PantallaMisRecetas extends State<PantallaMisRecetas> {
     'Aperitivo',
   ];
 
+  Future<void> enviarSolicitud() async {
+    try {
+      final user = FirebaseAuth.instance.currentUser;
+      if (user == null) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text("Debes iniciar sesión.")));
+        return;
+      }
+
+      if (_imageFile == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Toma una foto de tu receta.")),
+        );
+        return;
+      }
+
+      // 1. Subir imagen a Storage
+      String imagePath =
+          "solicitudes_recetas/${user.uid}/${DateTime.now().millisecondsSinceEpoch}.jpg";
+
+      final ref = FirebaseStorage.instance.ref().child(imagePath);
+      await ref.putFile(_imageFile!);
+      final imageUrl = await ref.getDownloadURL();
+
+      // 2. Enviar documento a Firestore
+      await FirebaseFirestore.instance.collection("SolicitudReceta").add({
+        "categoria": [_selectedCategory],
+        "descripcion": _descriptionController.text.trim(),
+        "estado": false,
+        "fechaCreacion": Timestamp.now(),
+        "imagen": imageUrl,
+        "ingredientes": _ingredientsController.text.trim(),
+        "respuesta": "",
+        "solicitadaPor": user.uid,
+        "titulo": _titleController.text.trim(),
+        "pasos": _stepsController.text.trim(),
+      });
+
+      // 🧽 3. Limpiar campos correctamente
+      _titleController.clear();
+      _descriptionController.clear();
+      _ingredientsController.clear();
+      _stepsController.clear();
+
+      setState(() {
+        _imageFile = null;
+        _selectedCategory = 'Principal';
+      });
+
+      // 4. Mostrar mensaje
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text("Solicitud enviada"),
+          backgroundColor: Colors.green[700],
+          duration: const Duration(seconds: 2),
+        ),
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text("Error al enviar solicitud: $e"),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+
   Future<void> _takePhoto() async {
     final ImagePicker picker = ImagePicker();
     final XFile? photo = await picker.pickImage(source: ImageSource.camera);
@@ -45,6 +116,7 @@ class _PantallaMisRecetas extends State<PantallaMisRecetas> {
         title: const Text('Nueva Receta'),
         backgroundColor: const Color(0xFFFFC107), // Amber color from the image
       ),
+
       body: SingleChildScrollView(
         child: Padding(
           padding: const EdgeInsets.all(16.0),
@@ -52,6 +124,7 @@ class _PantallaMisRecetas extends State<PantallaMisRecetas> {
             key: _formKey,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
+
               children: [
                 // Image Picker
                 GestureDetector(
@@ -202,18 +275,7 @@ class _PantallaMisRecetas extends State<PantallaMisRecetas> {
                 ElevatedButton(
                   onPressed: () {
                     if (_formKey.currentState!.validate()) {
-                      // TODO: Implement recipe submission
-                      if (_imageFile == null) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text(
-                              'Por favor toma una foto de tu receta',
-                            ),
-                          ),
-                        );
-                        return;
-                      }
-                      // Process the form data
+                      enviarSolicitud();
                     }
                   },
                   style: ElevatedButton.styleFrom(
@@ -224,7 +286,7 @@ class _PantallaMisRecetas extends State<PantallaMisRecetas> {
                     ),
                   ),
                   child: const Text(
-                    'Publicar Receta',
+                    'Enviar solicitud',
                     style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.bold,

@@ -412,17 +412,14 @@ class _PantallaInicioState extends State<PantallaInicio> {
             isSelected: _selectedIndex == 0,
             onTap: () => setState(() => _selectedIndex = 0),
           ),
+
           _buildBottomNavItem(
             icon: Icons.add_circle_outline,
-            label: '',
-            isAdd: true,
+            label: 'Mi receta',
+            isSelected: _selectedIndex == 4,
             onTap: () {
-              Get.snackbar(
-                'Función',
-                'Aquí podrás subir una receta (próximamente)',
-                snackPosition: SnackPosition.BOTTOM,
-                backgroundColor: Colors.orange.shade100,
-              );
+              setState(() => _selectedIndex = 4);
+              Get.to(() => const PantallaMisRecetas());
             },
           ),
           _buildBottomNavItem(
