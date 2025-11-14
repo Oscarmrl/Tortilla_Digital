@@ -266,6 +266,8 @@ class _PantallaInicioState extends State<PantallaInicio> {
             rating: rating,
             time: time,
             ingredientes: ingredientes,
+            idReceta: documentId,
+            userId: widget.userId,
           ),
         );
       },
