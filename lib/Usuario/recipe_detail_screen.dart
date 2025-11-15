@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class RecipeDetailScreen extends StatefulWidget {
   final String imagenUrl;
@@ -7,7 +8,8 @@ class RecipeDetailScreen extends StatefulWidget {
   final double rating;
   final String time;
   final List<String> ingredientes;
-  final List<String> pasos;
+  final String idReceta;
+  final String userId;
 
   const RecipeDetailScreen({
     super.key,
@@ -17,9 +19,9 @@ class RecipeDetailScreen extends StatefulWidget {
     required this.rating,
     required this.time,
     required this.ingredientes,
-    required this.pasos,
-    required String idReceta,
-    required String userId,
+    required this.idReceta,
+    required this.userId,
+    required List<String> pasos,
   });
 
   @override
@@ -28,6 +30,40 @@ class RecipeDetailScreen extends StatefulWidget {
 
 class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
   bool isFavorite = false;
+
+  @override
+  void initState() {
+    super.initState();
+    // Agregar receta visitada al historial
+    agregarRecetaAlHistorial();
+  }
+
+  /// Guarda automáticamente la receta visitada en Firestore
+  Future<void> agregarRecetaAlHistorial() async {
+    final userRef = FirebaseFirestore.instance
+        .collection('usuarios')
+        .doc(widget.userId);
+
+    await FirebaseFirestore.instance.runTransaction((transaction) async {
+      final snapshot = await transaction.get(userRef);
+
+      if (!snapshot.exists) {
+        print("❌ Usuario no existe.");
+        return;
+      }
+
+      List historial = snapshot.data()?['historial'] ?? [];
+
+      historial.add({'idReceta': widget.idReceta, 'fecha': Timestamp.now()});
+
+      // Limitar historial a 10
+      if (historial.length > 10) historial.removeAt(0);
+
+      transaction.update(userRef, {'historial': historial});
+    });
+
+    print("✔ Receta añadida al historial exitosamente");
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -39,7 +75,7 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Imagen principal
+                // IMAGEN PRINCIPAL
                 Stack(
                   children: [
                     Image.network(
@@ -55,7 +91,7 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
                           begin: Alignment.topCenter,
                           end: Alignment.bottomCenter,
                           colors: [
-                            Colors.black.withValues(alpha: 0.03),
+                            Colors.black.withOpacity(0.1),
                             Colors.transparent,
                             Colors.white,
                           ],
@@ -65,7 +101,7 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
                   ],
                 ),
 
-                // Contenido
+                // CONTENIDO
                 Transform.translate(
                   offset: const Offset(0, -30),
                   child: Container(
@@ -81,10 +117,9 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          // Título y rating
+                          // TÍTULO + RATING
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Expanded(
                                 child: Column(
@@ -95,15 +130,14 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
                                       style: const TextStyle(
                                         fontSize: 28,
                                         fontWeight: FontWeight.bold,
-                                        height: 1.2,
                                       ),
                                     ),
                                     const SizedBox(height: 8),
                                     Text(
                                       widget.category,
                                       style: const TextStyle(
-                                        fontSize: 14,
                                         color: Colors.grey,
+                                        fontSize: 14,
                                       ),
                                     ),
                                   ],
@@ -125,7 +159,6 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
                                     Text(
                                       widget.rating.toString(),
                                       style: const TextStyle(
-                                        fontSize: 16,
                                         fontWeight: FontWeight.bold,
                                       ),
                                     ),
@@ -134,35 +167,41 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
                               ),
                             ],
                           ),
+
                           const SizedBox(height: 24),
 
-                          // Información
+                          // INFO CARDS
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
                               _buildInfoCard(
                                 icon: Icons.access_time,
                                 value: widget.time.split(' ')[0],
-                                label: 'minutos',
+                                label: 'mins',
                               ),
-
+                              _buildInfoCard(
+                                icon: Icons.people_outline,
+                                value: '03',
+                                label: 'Servings',
+                              ),
                               _buildInfoCard(
                                 icon: Icons.local_fire_department_outlined,
                                 value: '103',
-                                label: 'calorias',
+                                label: 'Cal',
                               ),
                               _buildInfoCard(
                                 icon: Icons.layers_outlined,
                                 value: 'Easy',
-                                label: 'Grado',
+                                label: '',
                               ),
                             ],
                           ),
+
                           const SizedBox(height: 32),
 
-                          // Sección de ingredientes
+                          // INGREDIENTES
                           const Text(
-                            'Ingredientes',
+                            'Ingredients',
                             style: TextStyle(
                               fontSize: 22,
                               fontWeight: FontWeight.bold,
@@ -170,16 +209,15 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
                           ),
                           const SizedBox(height: 16),
                           Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
                             children: widget.ingredientes
-                                .map((ing) => _buildIngredient(ing))
+                                .map((e) => _buildIngredient(e))
                                 .toList(),
                           ),
+
                           const SizedBox(height: 32),
 
-                          // Sección de pasos (dinámica)
                           const Text(
-                            'Pasos',
+                            'Directions',
                             style: TextStyle(
                               fontSize: 22,
                               fontWeight: FontWeight.bold,
@@ -187,18 +225,18 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
                           ),
                           const SizedBox(height: 16),
 
-                          // 🔹 Aquí se generan dinámicamente los pasos desde Firestore
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: List.generate(
-                              widget.pasos.length,
-                              (index) => _buildDirection(
-                                index + 1,
-                                widget.pasos[index],
-                              ),
-                            ),
+                          _buildDirection(
+                            1,
+                            'In a large mixing bowl, whisk together the flour and eggs...',
                           ),
-
+                          _buildDirection(
+                            2,
+                            'Add the salt and butter; beat until smooth...',
+                          ),
+                          _buildDirection(
+                            3,
+                            'Pour or scoop the batter onto the griddle...',
+                          ),
                           const SizedBox(height: 100),
                         ],
                       ),
@@ -209,67 +247,50 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
             ),
           ),
 
-          // Botón volver
+          // BOTÓN VOLVER
           Positioned(
             top: 50,
             left: 20,
             child: GestureDetector(
               onTap: () => Navigator.pop(context),
-              child: Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFFFC107),
-                  shape: BoxShape.circle,
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.02),
-                      blurRadius: 8,
-                      offset: const Offset(0, 2),
-                    ),
-                  ],
-                ),
-                child: const Icon(
-                  Icons.arrow_back_ios_new,
-                  color: Colors.black,
-                  size: 20,
-                ),
-              ),
+              child: _circleButton(Icons.arrow_back_ios_new),
             ),
           ),
 
-          // Botón de favoritos
+          // FAVORITO
           Positioned(
             top: 50,
             right: 20,
             child: GestureDetector(
-              onTap: () {
-                setState(() {
-                  isFavorite = !isFavorite;
-                });
-              },
-              child: Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  shape: BoxShape.circle,
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.02),
-                      blurRadius: 8,
-                      offset: const Offset(0, 2),
-                    ),
-                  ],
-                ),
-                child: Icon(
-                  isFavorite ? Icons.bookmark : Icons.bookmark_outline,
-                  color: isFavorite ? const Color(0xFFFFC107) : Colors.black,
-                  size: 24,
-                ),
+              onTap: () => setState(() => isFavorite = !isFavorite),
+              child: _circleButton(
+                isFavorite ? Icons.bookmark : Icons.bookmark_outline,
+                color: isFavorite ? const Color(0xFFFFC107) : Colors.black,
               ),
             ),
           ),
         ],
       ),
+    );
+  }
+
+  /// === Widgets auxiliares ===
+
+  Widget _circleButton(IconData icon, {Color color = Colors.black}) {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        shape: BoxShape.circle,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Icon(icon, size: 24, color: color),
     );
   }
 
@@ -282,29 +303,25 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
       width: 75,
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: Colors.white,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: const Color(0xFFFFC107), width: 2),
       ),
       child: Column(
         children: [
-          Icon(icon, size: 28, color: Colors.black87),
+          Icon(icon, size: 28),
           const SizedBox(height: 8),
           Text(
             value,
             style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
           ),
           if (label.isNotEmpty)
-            Text(
-              label,
-              style: const TextStyle(fontSize: 11, color: Colors.grey),
-            ),
+            Text(label, style: const TextStyle(color: Colors.grey)),
         ],
       ),
     );
   }
 
-  Widget _buildIngredient(String ingredient) {
+  Widget _buildIngredient(String text) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
       child: Row(
@@ -318,12 +335,7 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
             ),
           ),
           const SizedBox(width: 12),
-          Expanded(
-            child: Text(
-              ingredient,
-              style: const TextStyle(fontSize: 16, height: 1.5),
-            ),
-          ),
+          Text(text, style: const TextStyle(fontSize: 16)),
         ],
       ),
     );
@@ -356,11 +368,7 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
           Expanded(
             child: Text(
               text,
-              style: const TextStyle(
-                fontSize: 15,
-                height: 1.6,
-                color: Colors.black87,
-              ),
+              style: const TextStyle(fontSize: 15, height: 1.6),
             ),
           ),
         ],
