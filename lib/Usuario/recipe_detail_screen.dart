@@ -18,6 +18,8 @@ class RecipeDetailScreen extends StatefulWidget {
     required this.time,
     required this.ingredientes,
     required this.pasos,
+    required String idReceta,
+    required String userId,
   });
 
   @override
