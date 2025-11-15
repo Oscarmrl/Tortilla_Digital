@@ -33,7 +33,7 @@ class MyApp extends StatelessWidget {
         GetPage(name: '/register', page: () => const RegisterPage()),
         GetPage(
           name: '/home',
-          page: () => const PantallaInicio(nombreUsuario: '', userId: ''),
+          page: () => const PantallaInicio(userId: ''),
         ),
         GetPage(name: '/adminPage', page: () => AdminPage()), // ❌ No const
       ],

@@ -64,26 +64,29 @@ class _LoginPageState extends State<LoginPage> {
         }
 
         final data = query.docs.first.data();
-        final rol = data['rol'];
-        final nombre = data['nombre'] ?? 'Usuario';
+        final rol = data['rol'] ?? '';
 
         if (rol == 'Admin') {
           Get.off(() => const AdminHomeScreen());
         } else {
-          Get.off(() => PantallaInicio(nombreUsuario: nombre, userId: ''));
+          Get.off(
+            () => PantallaInicio(
+              userId: '', // no tenemos uid en este backup
+            ),
+          );
         }
         return;
       }
 
+      // Documento principal existe
       final data = userDoc.data()!;
-      final rol = data['rol'];
-      final nombre = data['nombre'] ?? 'Usuario';
+      final rol = data['rol'] ?? '';
 
       if (rol == 'Admin') {
         Get.off(() => const AdminHomeScreen());
       } else {
         // Navegación con paso de parámetro usando Get
-        Get.off(() => PantallaInicio(nombreUsuario: nombre, userId: uid));
+        Get.off(() => PantallaInicio(userId: uid));
       }
     } on FirebaseAuthException catch (e) {
       String errorMsg = "Error al iniciar sesión";
@@ -95,6 +98,8 @@ class _LoginPageState extends State<LoginPage> {
         errorMsg = "Correo inválido";
       }
       _showMessage(errorMsg);
+    } catch (e) {
+      _showMessage("Ocurrió un error: ${e.toString()}");
     } finally {
       setState(() => _loading = false);
     }

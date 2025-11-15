@@ -7,6 +7,7 @@ class RecipeDetailScreen extends StatefulWidget {
   final double rating;
   final String time;
   final List<String> ingredientes;
+  final List<String> pasos;
 
   const RecipeDetailScreen({
     super.key,
@@ -16,6 +17,7 @@ class RecipeDetailScreen extends StatefulWidget {
     required this.rating,
     required this.time,
     required this.ingredientes,
+    required this.pasos,
   });
 
   @override
@@ -35,7 +37,7 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Hero Image
+                // Imagen principal
                 Stack(
                   children: [
                     Image.network(
@@ -61,7 +63,7 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
                   ],
                 ),
 
-                // Content
+                // Contenido
                 Transform.translate(
                   offset: const Offset(0, -30),
                   child: Container(
@@ -77,7 +79,7 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          // titulo y rating
+                          // Título y rating
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             crossAxisAlignment: CrossAxisAlignment.start,
@@ -132,37 +134,33 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
                           ),
                           const SizedBox(height: 24),
 
-                          // Informacion Cards
+                          // Información
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
                               _buildInfoCard(
                                 icon: Icons.access_time,
                                 value: widget.time.split(' ')[0],
-                                label: 'mins',
+                                label: 'minutos',
                               ),
-                              _buildInfoCard(
-                                icon: Icons.people_outline,
-                                value: '03',
-                                label: 'Servings',
-                              ),
+
                               _buildInfoCard(
                                 icon: Icons.local_fire_department_outlined,
                                 value: '103',
-                                label: 'Cal',
+                                label: 'calorias',
                               ),
                               _buildInfoCard(
                                 icon: Icons.layers_outlined,
                                 value: 'Easy',
-                                label: '',
+                                label: 'Grado',
                               ),
                             ],
                           ),
                           const SizedBox(height: 32),
 
-                          // Ingredients Section
+                          // Sección de ingredientes
                           const Text(
-                            'Ingredients',
+                            'Ingredientes',
                             style: TextStyle(
                               fontSize: 22,
                               fontWeight: FontWeight.bold,
@@ -177,26 +175,28 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
                           ),
                           const SizedBox(height: 32),
 
+                          // Sección de pasos (dinámica)
                           const Text(
-                            'Directions',
+                            'Pasos',
                             style: TextStyle(
                               fontSize: 22,
                               fontWeight: FontWeight.bold,
                             ),
                           ),
                           const SizedBox(height: 16),
-                          _buildDirection(
-                            1,
-                            'In a large mixing bowl, whisk together the flour and eggs. Gradually add in the milk and water, stirring to combine.',
+
+                          // 🔹 Aquí se generan dinámicamente los pasos desde Firestore
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: List.generate(
+                              widget.pasos.length,
+                              (index) => _buildDirection(
+                                index + 1,
+                                widget.pasos[index],
+                              ),
+                            ),
                           ),
-                          _buildDirection(
-                            2,
-                            'Add the salt and butter; beat until smooth. Heat a lightly oiled griddle or frying pan over medium-high heat.',
-                          ),
-                          _buildDirection(
-                            3,
-                            'Pour or scoop the batter onto the griddle, using approximately 1/4 cup for each crepe. Tilt the pan with a circular motion.',
-                          ),
+
                           const SizedBox(height: 100),
                         ],
                       ),
@@ -207,7 +207,7 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
             ),
           ),
 
-          // boton volver
+          // Botón volver
           Positioned(
             top: 50,
             left: 20,
@@ -235,7 +235,7 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
             ),
           ),
 
-          // Favorite Button
+          // Botón de favoritos
           Positioned(
             top: 50,
             right: 20,
@@ -316,7 +316,12 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
             ),
           ),
           const SizedBox(width: 12),
-          Text(ingredient, style: const TextStyle(fontSize: 16, height: 1.5)),
+          Expanded(
+            child: Text(
+              ingredient,
+              style: const TextStyle(fontSize: 16, height: 1.5),
+            ),
+          ),
         ],
       ),
     );
