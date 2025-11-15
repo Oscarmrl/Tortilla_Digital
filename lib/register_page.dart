@@ -50,6 +50,7 @@ class _RegisterPageState extends State<RegisterPage> {
             'nombre': name,
             'correo': email,
             'uid': userCredential.user!.uid,
+            'rol': 'Cliente',
             'fecha_creacion': FieldValue.serverTimestamp(),
           });
 

@@ -3,8 +3,11 @@ import 'package:get/get.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:tortilla_digital/Administrador/admin_home.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:tortilla_digital/register_page.dart';
 import 'package:tortilla_digital/Usuario/pantallainicio.dart';
+import 'package:google_sign_in/google_sign_in.dart';
+import 'package:flutter_facebook_auth/flutter_facebook_auth.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -24,8 +27,112 @@ class _LoginPageState extends State<LoginPage> {
   void initState() {
     super.initState();
     _auth = FirebaseAuth.instance;
+    _loadSavedCredentials(); // ⬅️ Cargar usuario guardado
   }
 
+  Future<void> _loginWithGoogle() async {
+    try {
+      final googleUser = await GoogleSignIn().signIn();
+      if (googleUser == null) return; // Usuario canceló
+
+      final googleAuth = await googleUser.authentication;
+
+      final credential = GoogleAuthProvider.credential(
+        accessToken: googleAuth.accessToken,
+        idToken: googleAuth.idToken,
+      );
+
+      final userCredential = await FirebaseAuth.instance.signInWithCredential(
+        credential,
+      );
+
+      _redirectUser(userCredential.user!.uid); // Redirige según Firestore
+    } catch (e) {
+      _showMessage("Error con Google: $e");
+    }
+  }
+
+  Future<void> _loginWithFacebook() async {
+    try {
+      final result = await FacebookAuth.instance.login();
+
+      if (result.status == LoginStatus.success) {
+        final token = result.accessToken!;
+        final credential = FacebookAuthProvider.credential(token.token);
+
+        final userCredential = await FirebaseAuth.instance.signInWithCredential(
+          credential,
+        );
+
+        _redirectUser(userCredential.user!.uid); // Redirige según Firestore
+      } else {
+        _showMessage("Error en Facebook: ${result.message}");
+      }
+    } catch (e) {
+      _showMessage("Error con Facebook: $e");
+    }
+  }
+
+  Future<void> _redirectUser(String uid) async {
+    final userDoc = await FirebaseFirestore.instance
+        .collection('usuarios')
+        .doc(uid)
+        .get();
+
+    if (!userDoc.exists) {
+      _showMessage("No se encontró información del usuario");
+      return;
+    }
+
+    final rol = userDoc.data()!['rol'];
+    final nombre = userDoc.data()?['nombre'] ?? 'Usuario';
+
+    if (rol == 'Admin') {
+      Get.offNamed('/adminPage');
+    } else {
+      Get.off(() => PantallaInicio(nombreUsuario: nombre));
+    }
+  }
+
+  // -------------------------------------------------------------
+  // 🔥 Cargar correo/contraseña guardados
+  // -------------------------------------------------------------
+  Future<void> _loadSavedCredentials() async {
+    final prefs = await SharedPreferences.getInstance();
+
+    final savedEmail = prefs.getString('saved_email');
+    final savedPassword = prefs.getString('saved_password');
+    final remember = prefs.getBool('remember_me') ?? false;
+
+    if (remember && savedEmail != null && savedPassword != null) {
+      _emailController.text = savedEmail;
+      _passwordController.text = savedPassword;
+      setState(() {
+        _rememberMe = true;
+      });
+    }
+  }
+
+  // -------------------------------------------------------------
+  // 🔥 Guardar o eliminar datos según el checkbox
+  // -------------------------------------------------------------
+  Future<void> _handleRememberMe(String email, String password) async {
+    final prefs = await SharedPreferences.getInstance();
+
+    if (_rememberMe) {
+      await prefs.setString('saved_email', email);
+      await prefs.setString('saved_password', password);
+      await prefs.setBool('remember_me', true);
+    } else {
+      await prefs.remove('saved_email');
+      await prefs.remove('saved_password');
+      await prefs.setBool('remember_me', false);
+    }
+  }
+
+  // -------------------------------------------------------------
+  // 🔥 Tu login original (solo añadí el llamado a guardar datos)
+  // -------------------------------------------------------------
   Future<void> _login() async {
     final email = _emailController.text.trim();
     final password = _passwordController.text.trim();
@@ -42,6 +149,9 @@ class _LoginPageState extends State<LoginPage> {
         email: email,
         password: password,
       );
+
+      // 🔥 Guardar o borrar datos
+      await _handleRememberMe(email, password);
 
       final uid = userCredential.user!.uid;
 
@@ -139,7 +249,6 @@ class _LoginPageState extends State<LoginPage> {
               ],
             ),
             child: Column(
-              mainAxisSize: MainAxisSize.min,
               children: [
                 const SizedBox(height: 30),
                 const CircleAvatar(
@@ -217,6 +326,7 @@ class _LoginPageState extends State<LoginPage> {
                           ),
                         ],
                       ),
+
                       const SizedBox(height: 8),
                       SizedBox(
                         width: double.infinity,
@@ -243,12 +353,40 @@ class _LoginPageState extends State<LoginPage> {
                                 ),
                         ),
                       ),
+
+                      const SizedBox(height: 15),
+                      const Text(
+                        "O continuar con",
+                        style: TextStyle(color: Colors.white),
+                      ),
                       const SizedBox(height: 10),
+
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          InkWell(
+                            onTap: _loginWithGoogle,
+                            child: CircleAvatar(
+                              radius: 22,
+                              backgroundColor: Colors.white,
+                              child: Icon(
+                                Icons.g_translate,
+                                color: Colors.red,
+                                size: 26,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 20),
+                        ],
+                      ),
+
+                      const SizedBox(height: 20),
                       const Text(
                         '¿No tienes cuenta?',
                         style: TextStyle(color: Colors.white),
                       ),
                       const SizedBox(height: 6),
+
                       OutlinedButton(
                         onPressed: () => Get.to(() => const RegisterPage()),
                         style: OutlinedButton.styleFrom(
