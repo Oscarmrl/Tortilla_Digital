@@ -90,7 +90,7 @@ class _LoginPageState extends State<LoginPage> {
     if (rol == 'Admin') {
       Get.offNamed('/adminPage');
     } else {
-      Get.off(() => PantallaInicio(nombreUsuario: nombre));
+      Get.off(() => PantallaInicio(nombreUsuario: nombre, userId: ''));
     }
   }
 
@@ -181,7 +181,8 @@ class _LoginPageState extends State<LoginPage> {
         } else {
           Get.off(
             () => PantallaInicio(
-              userId: '', // no tenemos uid en este backup
+              userId: '',
+              nombreUsuario: '', // no tenemos uid en este backup
             ),
           );
         }
@@ -196,7 +197,7 @@ class _LoginPageState extends State<LoginPage> {
         Get.off(() => const AdminHomeScreen());
       } else {
         // Navegación con paso de parámetro usando Get
-        Get.off(() => PantallaInicio(userId: uid));
+        Get.off(() => PantallaInicio(userId: uid, nombreUsuario: ''));
       }
     } on FirebaseAuthException catch (e) {
       String errorMsg = "Error al iniciar sesión";

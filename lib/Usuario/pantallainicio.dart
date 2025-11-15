@@ -10,7 +10,11 @@ import 'recipe_detail_screen.dart';
 class PantallaInicio extends StatefulWidget {
   final String userId;
 
-  const PantallaInicio({super.key, required this.userId});
+  const PantallaInicio({
+    super.key,
+    required this.userId,
+    required nombreUsuario,
+  });
 
   @override
   State<PantallaInicio> createState() => _PantallaInicioState();
