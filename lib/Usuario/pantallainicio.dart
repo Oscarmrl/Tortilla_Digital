@@ -5,17 +5,12 @@ import 'package:tortilla_digital/Usuario/pantalla_configuracion.dart';
 import 'package:tortilla_digital/Usuario/pantalla_mis_recetas.dart';
 import 'package:tortilla_digital/Usuario/pantalla_tus_comidas.dart';
 import 'package:tortilla_digital/login_page.dart';
-import '../recipe_detail_screen.dart';
+import 'recipe_detail_screen.dart';
 
 class PantallaInicio extends StatefulWidget {
-  final String nombreUsuario;
   final String userId;
 
-  const PantallaInicio({
-    super.key,
-    required this.nombreUsuario,
-    required this.userId,
-  });
+  const PantallaInicio({super.key, required this.userId});
 
   @override
   State<PantallaInicio> createState() => _PantallaInicioState();
@@ -27,82 +22,84 @@ class _PantallaInicioState extends State<PantallaInicio> {
   final String _placeholderImage =
       'https://images.unsplash.com/photo-1455619452474-d2be8b1e70cd?w=500';
 
+  final TextEditingController _searchController = TextEditingController();
+  String searchQuery = "";
+
+  String selectedCategory = "";
+  List<String> categories = [
+    'Populares',
+    'Rápida',
+    'Bebidas',
+    'Tradicionales',
+    'Postres',
+  ];
+
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.white,
-      body: SafeArea(
-        child: Column(
-          children: [
-            Expanded(
-              child: SingleChildScrollView(
-                child: Padding(
-                  padding: const EdgeInsets.all(20.0),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      _buildHeader(),
-                      const SizedBox(height: 20),
-                      _buildWelcomeText(),
-                      const SizedBox(height: 24),
-                      _buildSearchBar(),
-                      const SizedBox(height: 24),
-                      _buildCategoryIcons(),
-                      const SizedBox(height: 28),
+    return StreamBuilder<DocumentSnapshot>(
+      stream: FirebaseFirestore.instance
+          .collection("usuarios")
+          .doc(widget.userId)
+          .snapshots(),
+      builder: (context, snapshot) {
+        if (!snapshot.hasData) {
+          return const Scaffold(
+            body: Center(child: CircularProgressIndicator()),
+          );
+        }
 
-                      // 🔥 StreamBuilder para recetas aprobadas
-                      StreamBuilder<QuerySnapshot>(
-                        stream: FirebaseFirestore.instance
-                            .collection('Recetas')
-                            .where('esAprovada', isEqualTo: true)
-                            .snapshots(),
-                        builder: (context, snapshot) {
-                          if (snapshot.connectionState ==
-                              ConnectionState.waiting) {
-                            return const Center(
-                              child: Padding(
-                                padding: EdgeInsets.all(40.0),
-                                child: CircularProgressIndicator(),
-                              ),
-                            );
-                          }
+        final data = snapshot.data!.data() as Map<String, dynamic>;
 
-                          if (!snapshot.hasData ||
-                              snapshot.data!.docs.isEmpty) {
-                            return _buildPlaceholderContent();
-                          }
+        final nombreUsuario = data["nombre"] ?? "Usuario";
+        final imagen =
+            data["imagen"] ??
+            "https://cdn-icons-png.flaticon.com/512/3135/3135715.png";
 
-                          final allRecipes = snapshot.data!.docs;
-
-                          return Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [_buildAllRecipesSection(allRecipes)],
-                          );
-                        },
+        return Scaffold(
+          backgroundColor: Colors.white,
+          resizeToAvoidBottomInset: false,
+          body: SafeArea(
+            child: Column(
+              children: [
+                Expanded(
+                  child: SingleChildScrollView(
+                    child: Padding(
+                      padding: const EdgeInsets.all(20.0),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          _buildHeader(imagen),
+                          const SizedBox(height: 20),
+                          _buildWelcomeText(nombreUsuario),
+                          const SizedBox(height: 24),
+                          _buildSearchBar(),
+                          const SizedBox(height: 24),
+                          _buildCategoryIcons(),
+                          const SizedBox(height: 28),
+                          _buildRecipes(),
+                        ],
                       ),
-                    ],
+                    ),
                   ),
                 ),
-              ),
+                _buildBottomNavigationBar(),
+              ],
             ),
-
-            _buildBottomNavigationBar(),
-          ],
-        ),
-      ),
+          ),
+        );
+      },
     );
   }
 
-  // ==================== SECCIONES ====================
+  // =============================================================
+  // ===================== SECCIONES =============================
+  // =============================================================
 
-  Widget _buildHeader() {
+  Widget _buildHeader(String imagen) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        const CircleAvatar(
-          radius: 25,
-          backgroundImage: AssetImage('assets/avatar.png'),
-        ),
+        CircleAvatar(radius: 25, backgroundImage: NetworkImage(imagen)),
         Container(
           padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
@@ -118,12 +115,12 @@ class _PantallaInicioState extends State<PantallaInicio> {
     );
   }
 
-  Widget _buildWelcomeText() {
+  Widget _buildWelcomeText(String nombreUsuario) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Hola, ${widget.nombreUsuario}!',
+          'Hola, $nombreUsuario!',
           style: const TextStyle(fontSize: 16, color: Colors.grey),
         ),
         const SizedBox(height: 8),
@@ -159,22 +156,16 @@ class _PantallaInicioState extends State<PantallaInicio> {
         children: [
           const Icon(Icons.search, color: Colors.grey),
           const SizedBox(width: 12),
-          const Expanded(
+          Expanded(
             child: TextField(
-              decoration: InputDecoration(
+              controller: _searchController,
+              onChanged: (value) =>
+                  setState(() => searchQuery = value.toLowerCase()),
+              decoration: const InputDecoration(
                 hintText: 'Busca cualquier receta',
                 border: InputBorder.none,
-                hintStyle: TextStyle(color: Colors.grey),
               ),
             ),
-          ),
-          Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: const Icon(Icons.tune, color: Colors.black87),
           ),
         ],
       ),
@@ -185,25 +176,91 @@ class _PantallaInicioState extends State<PantallaInicio> {
     return SingleChildScrollView(
       scrollDirection: Axis.horizontal,
       child: Row(
-        children: [
-          _buildCategoryIcon(
-            icon: Icons.local_fire_department,
-            label: 'Populares',
-            isSelected: true,
-          ),
-          _buildCategoryIcon(icon: Icons.local_pizza_outlined, label: 'Rápida'),
-          _buildCategoryIcon(icon: Icons.local_cafe_outlined, label: 'Bebidas'),
-          _buildCategoryIcon(
-            icon: Icons.restaurant_outlined,
-            label: 'Tradicionales',
-          ),
-          _buildCategoryIcon(icon: Icons.icecream_outlined, label: 'Postres'),
-        ],
+        children: categories.map((category) {
+          bool isSelected = selectedCategory == category;
+          return GestureDetector(
+            onTap: () =>
+                setState(() => selectedCategory = isSelected ? "" : category),
+            child: _buildCategoryIcon(
+              icon: _getIconForCategory(category),
+              label: category,
+              isSelected: isSelected,
+            ),
+          );
+        }).toList(),
       ),
     );
   }
 
+  IconData _getIconForCategory(String category) {
+    switch (category) {
+      case 'Populares':
+        return Icons.local_fire_department;
+      case 'Rápida':
+        return Icons.local_pizza_outlined;
+      case 'Bebidas':
+        return Icons.local_cafe_outlined;
+      case 'Tradicionales':
+        return Icons.restaurant_outlined;
+      case 'Postres':
+        return Icons.icecream_outlined;
+      default:
+        return Icons.fastfood;
+    }
+  }
+
+  Widget _buildRecipes() {
+    return StreamBuilder<QuerySnapshot>(
+      stream: FirebaseFirestore.instance
+          .collection('Recetas')
+          .where('esAprovada', isEqualTo: true)
+          .snapshots(),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(
+            child: Padding(
+              padding: EdgeInsets.all(40),
+              child: CircularProgressIndicator(),
+            ),
+          );
+        }
+
+        if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+          return _buildPlaceholderContent();
+        }
+
+        final allRecipes = snapshot.data!.docs;
+
+        final filteredRecipes = allRecipes.where((recipe) {
+          final data = recipe.data() as Map<String, dynamic>;
+          final titulo = (data['titulo'] ?? '').toString().toLowerCase();
+          final categoria = (data['categoria'] ?? '').toString();
+
+          bool matchesSearch =
+              titulo.contains(searchQuery) ||
+              categoria.toLowerCase().contains(searchQuery);
+          bool matchesCategory =
+              selectedCategory.isEmpty || categoria == selectedCategory;
+
+          return matchesSearch && matchesCategory;
+        }).toList();
+
+        return _buildAllRecipesSection(filteredRecipes);
+      },
+    );
+  }
+
   Widget _buildAllRecipesSection(List<QueryDocumentSnapshot> recipes) {
+    if (recipes.isEmpty) {
+      return const Padding(
+        padding: EdgeInsets.all(20),
+        child: Text(
+          "No se encontraron recetas.",
+          style: TextStyle(fontSize: 16, color: Colors.grey),
+        ),
+      );
+    }
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -254,9 +311,10 @@ class _PantallaInicioState extends State<PantallaInicio> {
             .collection('Recetas')
             .doc(documentId)
             .get();
-
         final data = doc.data() ?? {};
+
         final ingredientes = List<String>.from(data['ingredientes'] ?? []);
+        final pasos = List<String>.from(data['pasos'] ?? []);
 
         Get.to(
           () => RecipeDetailScreen(
@@ -268,6 +326,7 @@ class _PantallaInicioState extends State<PantallaInicio> {
             ingredientes: ingredientes,
             idReceta: documentId,
             userId: widget.userId,
+            pasos: pasos,
           ),
         );
       },
@@ -506,7 +565,6 @@ class _PantallaInicioState extends State<PantallaInicio> {
     );
   }
 
-  // === HELPERS ===
   double _parseRating(dynamic rating) {
     if (rating == null) return 4.8;
     if (rating is double) return rating;
@@ -517,11 +575,11 @@ class _PantallaInicioState extends State<PantallaInicio> {
   Widget _buildPlaceholderContent() {
     return const Center(
       child: Padding(
-        padding: EdgeInsets.all(40.0),
+        padding: EdgeInsets.all(40),
         child: Text(
           'No hay recetas disponibles en este momento.',
-          style: TextStyle(fontSize: 16, color: Colors.grey),
           textAlign: TextAlign.center,
+          style: TextStyle(fontSize: 16, color: Colors.grey),
         ),
       ),
     );

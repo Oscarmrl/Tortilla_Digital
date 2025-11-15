@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:get/get.dart';
+import 'admin_ver_recetas.dart';
 
 class AdminPage extends StatefulWidget {
   const AdminPage({super.key});
@@ -11,10 +13,9 @@ class AdminPage extends StatefulWidget {
 class _AdminPageState extends State<AdminPage> {
   final _auth = FirebaseAuth.instance;
 
-  // Cierra sesión
   Future<void> _logout() async {
     await _auth.signOut();
-    Navigator.pushReplacementNamed(context, '/');
+    Get.offAllNamed('/login'); // Regresa al login y elimina historial
   }
 
   @override
@@ -39,36 +40,30 @@ class _AdminPageState extends State<AdminPage> {
           mainAxisSpacing: 16,
           children: [
             _buildAdminCard(
-              icon: Icons.person,
-              title: 'Usuarios',
+              icon: Icons.restaurant_menu,
+              title: 'Ver Recetas',
               color: Colors.green.shade700,
               onTap: () {
-                // 👉 Aquí abrirás la lista de usuarios
+                Get.to(() => AdminVerRecetas(buscarTitulo: ''));
               },
+            ),
+            _buildAdminCard(
+              icon: Icons.person,
+              title: 'Usuarios',
+              color: Colors.blue.shade700,
+              onTap: () {},
             ),
             _buildAdminCard(
               icon: Icons.shopping_bag,
               title: 'Productos',
               color: Colors.orange.shade700,
-              onTap: () {
-                // 👉 Aquí abrirás el panel de productos
-              },
-            ),
-            _buildAdminCard(
-              icon: Icons.analytics,
-              title: 'Reportes',
-              color: Colors.blue.shade700,
-              onTap: () {
-                // 👉 Aquí abrirás las estadísticas o reportes
-              },
+              onTap: () {},
             ),
             _buildAdminCard(
               icon: Icons.settings,
               title: 'Configuración',
               color: Colors.grey.shade700,
-              onTap: () {
-                // 👉 Aquí abrirás las configuraciones del sistema
-              },
+              onTap: () {},
             ),
           ],
         ),
@@ -76,7 +71,6 @@ class _AdminPageState extends State<AdminPage> {
     );
   }
 
-  // Widget reutilizable para las tarjetas del panel
   Widget _buildAdminCard({
     required IconData icon,
     required String title,

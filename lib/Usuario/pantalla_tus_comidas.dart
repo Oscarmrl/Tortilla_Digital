@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:tortilla_digital/recipe_detail_screen.dart';
+import 'package:tortilla_digital/Usuario/recipe_detail_screen.dart';
 
 String _formatTimestamp(dynamic ts) {
   if (ts == null) return '';
@@ -265,6 +265,7 @@ class _MisComidasScreenState extends State<MisComidasScreen> {
                                     ingredientes: ingredientes,
                                     idReceta: recetaId,
                                     userId: uidFinal,
+                                    pasos: [],
                                   ),
                                 ),
                               );
