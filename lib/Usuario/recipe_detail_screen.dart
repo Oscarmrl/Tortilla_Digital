@@ -8,6 +8,7 @@ class RecipeDetailScreen extends StatefulWidget {
   final double rating;
   final String time;
   final List<String> ingredientes;
+  final List<String> pasos; // ✅ Agregado a la clase
   final String idReceta;
   final String userId;
 
@@ -19,9 +20,9 @@ class RecipeDetailScreen extends StatefulWidget {
     required this.rating,
     required this.time,
     required this.ingredientes,
+    required this.pasos, // ✅ Ahora es parte de la clase
     required this.idReceta,
     required this.userId,
-    required List<String> pasos,
   });
 
   @override
@@ -180,11 +181,6 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
                                 label: 'mins',
                               ),
                               _buildInfoCard(
-                                icon: Icons.people_outline,
-                                value: '03',
-                                label: 'Servings',
-                              ),
-                              _buildInfoCard(
                                 icon: Icons.local_fire_department_outlined,
                                 value: '103',
                                 label: 'Cal',
@@ -192,7 +188,7 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
                               _buildInfoCard(
                                 icon: Icons.layers_outlined,
                                 value: 'Easy',
-                                label: '',
+                                label: 'Dific',
                               ),
                             ],
                           ),
@@ -201,7 +197,7 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
 
                           // INGREDIENTES
                           const Text(
-                            'Ingredients',
+                            'Ingredientes',
                             style: TextStyle(
                               fontSize: 22,
                               fontWeight: FontWeight.bold,
@@ -216,8 +212,9 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
 
                           const SizedBox(height: 32),
 
+                          // DIRECCIONES / PASOS
                           const Text(
-                            'Directions',
+                            'Pasos',
                             style: TextStyle(
                               fontSize: 22,
                               fontWeight: FontWeight.bold,
@@ -225,18 +222,13 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
                           ),
                           const SizedBox(height: 16),
 
-                          _buildDirection(
-                            1,
-                            'In a large mixing bowl, whisk together the flour and eggs...',
-                          ),
-                          _buildDirection(
-                            2,
-                            'Add the salt and butter; beat until smooth...',
-                          ),
-                          _buildDirection(
-                            3,
-                            'Pour or scoop the batter onto the griddle...',
-                          ),
+                          // ✅ AQUÍ USAMOS LOS PASOS DINÁMICOS
+                          ...widget.pasos.asMap().entries.map((entry) {
+                            int index = entry.key;
+                            String paso = entry.value;
+                            return _buildDirection(index + 1, paso);
+                          }).toList(),
+
                           const SizedBox(height: 100),
                         ],
                       ),
