@@ -20,8 +20,6 @@ String _formatTimestamp(dynamic ts) {
 
 class MisComidasScreen extends StatefulWidget {
   final String userId;
-
-  /// Opción B: Si no se envía userId, lo toma automático desde FirebaseAuth
   const MisComidasScreen({this.userId = '', Key? key}) : super(key: key);
 
   @override
@@ -34,132 +32,135 @@ class _MisComidasScreenState extends State<MisComidasScreen> {
   @override
   void initState() {
     super.initState();
-
-    // Si userId viene vacío → usar UID automáticamente
     uidFinal = widget.userId.isNotEmpty
         ? widget.userId
         : (FirebaseAuth.instance.currentUser?.uid ?? '');
-
-    if (uidFinal.isEmpty) {
-      debugPrint("❌ ERROR: No hay usuario autenticado.");
-    }
   }
 
-  /// Guarda una receta y limita historial a 10
-  Future<void> agregarRecetaAlHistorial(String recetaId) async {
-    if (uidFinal.isEmpty) return;
-
-    final userRef = FirebaseFirestore.instance
-        .collection('usuarios')
-        .doc(uidFinal);
-
-    await FirebaseFirestore.instance.runTransaction((transaction) async {
-      final snapshot = await transaction.get(userRef);
-
-      if (!snapshot.exists) {
-        throw Exception("Usuario no encontrado en Firestore");
-      }
-
-      List historial = snapshot.data()?['historial'] ?? [];
-
-      historial.add({'idReceta': recetaId, 'fecha': Timestamp.now()});
-
-      // Mantener solo los últimos 10
-      if (historial.length > 10) historial.removeAt(0);
-
-      transaction.update(userRef, {'historial': historial});
-    });
-
-    setState(() {});
-  }
-
-  /// metodo limpiar historial
   Future<void> limpiarHistorial() async {
     if (uidFinal.isEmpty) return;
-
-    final userRef = FirebaseFirestore.instance
+    await FirebaseFirestore.instance
         .collection('usuarios')
-        .doc(uidFinal);
-
-    await userRef.update({'historial': []});
-
+        .doc(uidFinal)
+        .update({'historial': []});
     setState(() {});
   }
 
-  /// Cargar historial ordenado
   Future<List<Map<String, dynamic>>> obtenerHistorialOrdenado() async {
     if (uidFinal.isEmpty) return [];
-
     final snapshot = await FirebaseFirestore.instance
         .collection('usuarios')
         .doc(uidFinal)
         .get();
 
     if (!snapshot.exists) return [];
-
     List historial = snapshot.data()?['historial'] ?? [];
-
-    historial.sort(
-      (a, b) => (b['fecha'] as Timestamp).compareTo(a['fecha'] as Timestamp),
-    );
-
+    historial.sort((a, b) => (b['fecha'] as Timestamp).compareTo(a['fecha']));
     return historial.cast<Map<String, dynamic>>();
   }
 
   @override
   Widget build(BuildContext context) {
-    // Usuario no logueado
+    // Caso: usuario NO autenticado
     if (uidFinal.isEmpty) {
       return Scaffold(
+        backgroundColor: const Color(0xffF7F7F7),
         appBar: AppBar(
-          backgroundColor: Colors.amber,
-          title: const Text("Mis Comidas"),
+          backgroundColor: const Color(0xffFFC727),
+          elevation: 0,
+          centerTitle: true,
+          title: const Text(
+            'Mis Comidas',
+            style: TextStyle(
+              color: Colors.black,
+              fontWeight: FontWeight.bold,
+              fontSize: 19,
+            ),
+          ),
         ),
         body: const Center(
           child: Text(
             "Debes iniciar sesión para ver tu historial",
-            style: TextStyle(fontSize: 18),
+            style: TextStyle(fontSize: 17, fontWeight: FontWeight.w500),
           ),
         ),
       );
     }
 
+    // Caso: usuario autenticado → aquí va el AppBar con el ícono de limpiar historial
     return Scaffold(
-      backgroundColor: const Color.fromARGB(255, 240, 233, 233),
+      backgroundColor: const Color(0xffF7F7F7),
       appBar: AppBar(
-        backgroundColor: Colors.amber,
+        backgroundColor: const Color(0xffFFC727),
+        elevation: 0,
+        centerTitle: true,
         title: const Text(
           'Mis Comidas',
-          style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
+          style: TextStyle(
+            color: Colors.black,
+            fontWeight: FontWeight.bold,
+            fontSize: 19,
+          ),
         ),
-        elevation: 0,
+        actions: [
+          IconButton(
+            tooltip: "Limpiar historial",
+            icon: const Icon(Icons.delete_outline, color: Colors.black),
+            onPressed: () async {
+              final confirm = await showDialog<bool>(
+                context: context,
+                builder: (_) => AlertDialog(
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(15),
+                  ),
+                  title: const Text(
+                    "¿Deseas eliminar el historial?",
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                  content: const Text(
+                    "Esta acción no se puede deshacer.",
+                    style: TextStyle(fontSize: 15),
+                  ),
+                  actions: [
+                    TextButton(
+                      child: const Text("Cancelar"),
+                      onPressed: () => Navigator.pop(context, false),
+                    ),
+                    ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xffFFC727),
+                      ),
+                      child: const Text(
+                        "Eliminar",
+                        style: TextStyle(color: Colors.black),
+                      ),
+                      onPressed: () => Navigator.pop(context, true),
+                    ),
+                  ],
+                ),
+              );
+
+              if (confirm == true) {
+                await limpiarHistorial();
+
+                // Opcional: mostrar Snackbar de confirmación
+                if (mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Historial eliminado'),
+                      duration: Duration(seconds: 2),
+                    ),
+                  );
+                }
+              }
+            },
+          ),
+        ],
       ),
       body: Column(
         children: [
-          // Botón para probar agregando recetas
-          Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: ElevatedButton(
-              onPressed: () async {
-                await limpiarHistorial();
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.amber,
-                foregroundColor: Colors.black,
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 24,
-                  vertical: 12,
-                ),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-              ),
-              child: const Text(
-                'Limpiar Historial',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-              ),
-            ),
-          ),
+          const SizedBox(height: 15),
+          const SizedBox(height: 10),
 
           Expanded(
             child: FutureBuilder<List<Map<String, dynamic>>>(
@@ -168,7 +169,7 @@ class _MisComidasScreenState extends State<MisComidasScreen> {
                 if (snapshot.connectionState == ConnectionState.waiting) {
                   return const Center(
                     child: CircularProgressIndicator(
-                      valueColor: AlwaysStoppedAnimation<Color>(Colors.amber),
+                      valueColor: AlwaysStoppedAnimation(Color(0xffFFC727)),
                     ),
                   );
                 }
@@ -179,15 +180,15 @@ class _MisComidasScreenState extends State<MisComidasScreen> {
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         Icon(
-                          Icons.restaurant_menu,
-                          size: 64,
-                          color: Colors.grey[700],
+                          Icons.no_food,
+                          size: 70,
+                          color: Colors.grey.shade400,
                         ),
-                        const SizedBox(height: 16),
+                        const SizedBox(height: 14),
                         Text(
-                          'No hay historial aún',
+                          "No hay recetas aún",
                           style: TextStyle(
-                            color: Colors.grey[400],
+                            color: Colors.grey.shade600,
                             fontSize: 18,
                           ),
                         ),
@@ -197,12 +198,11 @@ class _MisComidasScreenState extends State<MisComidasScreen> {
                 }
 
                 final historial = snapshot.data!;
-
                 return GridView.builder(
                   padding: const EdgeInsets.all(16),
                   gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                     crossAxisCount: 2,
-                    childAspectRatio: 0.85,
+                    childAspectRatio: .82,
                     crossAxisSpacing: 16,
                     mainAxisSpacing: 16,
                   ),
@@ -224,9 +224,7 @@ class _MisComidasScreenState extends State<MisComidasScreen> {
                         }
 
                         if (!snapshotReceta.data!.exists) {
-                          return const Card(
-                            child: Center(child: Text("Receta eliminada")),
-                          );
+                          return _emptyRecipeCard();
                         }
 
                         final data =
@@ -245,79 +243,16 @@ class _MisComidasScreenState extends State<MisComidasScreen> {
                             4.5;
                         final tiempo = data['tiempo'] ?? '10 mins';
 
-                        return Card(
-                          elevation: 8,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(16),
-                          ),
-                          child: InkWell(
-                            borderRadius: BorderRadius.circular(16),
-                            onTap: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (_) => RecipeDetailScreen(
-                                    imagenUrl: imagen,
-                                    title: titulo,
-                                    category: categoria,
-                                    rating: rating,
-                                    time: tiempo,
-                                    ingredientes: ingredientes,
-                                    idReceta: recetaId,
-                                    userId: uidFinal,
-                                    pasos: [],
-                                  ),
-                                ),
-                              );
-                            },
-                            child: Column(
-                              children: [
-                                // imagen de la receta
-                                ClipRRect(
-                                  borderRadius: const BorderRadius.vertical(
-                                    top: Radius.circular(16),
-                                  ),
-                                  child: Image.network(
-                                    imagen,
-                                    height: 100,
-                                    width: double.infinity,
-                                    fit: BoxFit.cover,
-                                  ),
-                                ),
-                                const SizedBox(height: 8),
-
-                                // título
-                                Padding(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 8,
-                                  ),
-                                  child: Text(
-                                    titulo,
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                    style: const TextStyle(
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                ),
-
-                                // fecha vista
-                                Padding(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 8,
-                                  ),
-                                  child: Text(
-                                    _formatTimestamp(h['fecha']),
-                                    style: const TextStyle(
-                                      fontSize: 12,
-                                      color: Colors.grey,
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
+                        return _recipeCard(
+                          context,
+                          imagen,
+                          titulo,
+                          categoria,
+                          rating,
+                          tiempo,
+                          ingredientes,
+                          recetaId,
+                          h['fecha'],
                         );
                       },
                     );
@@ -327,6 +262,114 @@ class _MisComidasScreenState extends State<MisComidasScreen> {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _emptyRecipeCard() {
+    return Container(
+      decoration: _cardDecoration(),
+      child: const Center(
+        child: Text(
+          "Receta eliminada",
+          style: TextStyle(fontWeight: FontWeight.bold),
+        ),
+      ),
+    );
+  }
+
+  BoxDecoration _cardDecoration() => BoxDecoration(
+    color: Colors.white,
+    borderRadius: BorderRadius.circular(18),
+    boxShadow: [
+      BoxShadow(
+        color: Colors.black.withOpacity(0.06),
+        blurRadius: 10,
+        offset: const Offset(0, 3),
+      ),
+    ],
+  );
+
+  Widget _recipeCard(
+    BuildContext context,
+    String img,
+    String title,
+    String category,
+    double rating,
+    String time,
+    List<String> ingredientes,
+    String recetaId,
+    Timestamp fecha,
+  ) {
+    return InkWell(
+      borderRadius: BorderRadius.circular(18),
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => RecipeDetailScreen(
+              imagenUrl: img,
+              title: title,
+              category: category,
+              rating: rating,
+              time: time,
+              ingredientes: ingredientes,
+              idReceta: recetaId,
+              userId: uidFinal,
+              pasos: [],
+            ),
+          ),
+        );
+      },
+      child: Container(
+        decoration: _cardDecoration(),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Imagen
+            ClipRRect(
+              borderRadius: const BorderRadius.vertical(
+                top: Radius.circular(18),
+              ),
+              child: Image.network(
+                img,
+                height: 100,
+                width: double.infinity,
+                fit: BoxFit.cover,
+              ),
+            ),
+
+            const SizedBox(height: 8),
+
+            // Título
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 8),
+              child: Text(
+                title,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.black,
+                ),
+              ),
+            ),
+
+            // Fecha
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 8),
+              child: Text(
+                _formatTimestamp(fecha),
+                style: TextStyle(
+                  fontSize: 11,
+                  color: Colors.grey.shade600,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
