@@ -12,7 +12,12 @@
           "package_name": "com.example.firebase"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "498037161519-2cvorupkla6bbp9avg2qphek9fct0a86.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
           "current_key": "AIzaSyAMlFEX-2OnOihwSkShaakyhPteduy9YeI"
@@ -20,7 +25,12 @@
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "498037161519-2cvorupkla6bbp9avg2qphek9fct0a86.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
         }
       }
     },
@@ -31,7 +41,20 @@
           "package_name": "com.example.tortilla_digital"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "498037161519-tuftjo412p7b54ricqojkghpjlm764o8.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.tortilla_digital",
+            "certificate_hash": "adbcc330103542275add0d12f5beecc0bf035a4e"
+          }
+        },
+        {
+          "client_id": "498037161519-2cvorupkla6bbp9avg2qphek9fct0a86.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
           "current_key": "AIzaSyAMlFEX-2OnOihwSkShaakyhPteduy9YeI"
@@ -39,7 +62,12 @@
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "498037161519-2cvorupkla6bbp9avg2qphek9fct0a86.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
         }
       }
     }

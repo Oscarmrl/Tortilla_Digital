@@ -27,9 +27,12 @@ class _LoginPageState extends State<LoginPage> {
   void initState() {
     super.initState();
     _auth = FirebaseAuth.instance;
-    _loadSavedCredentials(); // ⬅️ Cargar usuario guardado
+    _loadSavedCredentials();
   }
 
+  // -------------------------------------------------------------
+  // 🔥 LOGIN CON GOOGLE (Ahora crea el documento en Firestore)
+  // -------------------------------------------------------------
   Future<void> _loginWithGoogle() async {
     try {
       final googleUser = await GoogleSignIn().signIn();
@@ -46,12 +49,34 @@ class _LoginPageState extends State<LoginPage> {
         credential,
       );
 
-      _redirectUser(userCredential.user!.uid); // Redirige según Firestore
+      final uid = userCredential.user!.uid;
+
+      // 🔥 VERIFICAR SI EL USUARIO YA EXISTE EN FIRESTORE
+      final userDoc = await FirebaseFirestore.instance
+          .collection('usuarios')
+          .doc(uid)
+          .get();
+
+      if (!userDoc.exists) {
+        // 🔥 CREAR DOCUMENTO SI ES LA PRIMERA VEZ
+        await FirebaseFirestore.instance.collection('usuarios').doc(uid).set({
+          'nombre': userCredential.user!.displayName ?? 'Usuario',
+          'correo': userCredential.user!.email,
+          'rol': 'Cliente', // Rol por defecto
+          'fechaRegistro': FieldValue.serverTimestamp(),
+          'metodRegistro': 'Google',
+        });
+      }
+
+      _redirectUser(uid);
     } catch (e) {
       _showMessage("Error con Google: $e");
     }
   }
 
+  // -------------------------------------------------------------
+  // 🔥 LOGIN CON FACEBOOK (Ahora crea el documento en Firestore)
+  // -------------------------------------------------------------
   Future<void> _loginWithFacebook() async {
     try {
       final result = await FacebookAuth.instance.login();
@@ -64,7 +89,26 @@ class _LoginPageState extends State<LoginPage> {
           credential,
         );
 
-        _redirectUser(userCredential.user!.uid); // Redirige según Firestore
+        final uid = userCredential.user!.uid;
+
+        // 🔥 VERIFICAR SI EL USUARIO YA EXISTE EN FIRESTORE
+        final userDoc = await FirebaseFirestore.instance
+            .collection('usuarios')
+            .doc(uid)
+            .get();
+
+        if (!userDoc.exists) {
+          // 🔥 CREAR DOCUMENTO SI ES LA PRIMERA VEZ
+          await FirebaseFirestore.instance.collection('usuarios').doc(uid).set({
+            'nombre': userCredential.user!.displayName ?? 'Usuario',
+            'correo': userCredential.user!.email,
+            'rol': 'Usuario',
+            'fechaRegistro': FieldValue.serverTimestamp(),
+            'metodRegistro': 'Facebook',
+          });
+        }
+
+        _redirectUser(uid);
       } else {
         _showMessage("Error en Facebook: ${result.message}");
       }
@@ -73,6 +117,9 @@ class _LoginPageState extends State<LoginPage> {
     }
   }
 
+  // -------------------------------------------------------------
+  // 🔥 REDIRIGIR SEGÚN ROL
+  // -------------------------------------------------------------
   Future<void> _redirectUser(String uid) async {
     final userDoc = await FirebaseFirestore.instance
         .collection('usuarios')
@@ -88,14 +135,14 @@ class _LoginPageState extends State<LoginPage> {
     final nombre = userDoc.data()?['nombre'] ?? 'Usuario';
 
     if (rol == 'Admin') {
-      Get.offNamed('/adminPage');
+      Get.off(() => const AdminHomeScreen());
     } else {
-      Get.off(() => PantallaInicio(nombreUsuario: nombre, userId: ''));
+      Get.off(() => PantallaInicio(nombreUsuario: nombre, userId: uid));
     }
   }
 
   // -------------------------------------------------------------
-  // 🔥 Cargar correo/contraseña guardados
+  // 🔥 CARGAR CREDENCIALES GUARDADAS
   // -------------------------------------------------------------
   Future<void> _loadSavedCredentials() async {
     final prefs = await SharedPreferences.getInstance();
@@ -114,7 +161,7 @@ class _LoginPageState extends State<LoginPage> {
   }
 
   // -------------------------------------------------------------
-  // 🔥 Guardar o eliminar datos según el checkbox
+  // 🔥 GUARDAR O ELIMINAR DATOS SEGÚN CHECKBOX
   // -------------------------------------------------------------
   Future<void> _handleRememberMe(String email, String password) async {
     final prefs = await SharedPreferences.getInstance();
@@ -131,7 +178,7 @@ class _LoginPageState extends State<LoginPage> {
   }
 
   // -------------------------------------------------------------
-  // 🔥 Tu login original (solo añadí el llamado a guardar datos)
+  // 🔥 LOGIN CON EMAIL Y CONTRASEÑA
   // -------------------------------------------------------------
   Future<void> _login() async {
     final email = _emailController.text.trim();
@@ -181,8 +228,8 @@ class _LoginPageState extends State<LoginPage> {
         } else {
           Get.off(
             () => PantallaInicio(
-              userId: '',
-              nombreUsuario: '', // no tenemos uid en este backup
+              userId: uid,
+              nombreUsuario: data['nombre'] ?? 'Usuario',
             ),
           );
         }
@@ -196,8 +243,12 @@ class _LoginPageState extends State<LoginPage> {
       if (rol == 'Admin') {
         Get.off(() => const AdminHomeScreen());
       } else {
-        // Navegación con paso de parámetro usando Get
-        Get.off(() => PantallaInicio(userId: uid, nombreUsuario: ''));
+        Get.off(
+          () => PantallaInicio(
+            userId: uid,
+            nombreUsuario: data['nombre'] ?? 'Usuario',
+          ),
+        );
       }
     } on FirebaseAuthException catch (e) {
       String errorMsg = "Error al iniciar sesión";
@@ -327,7 +378,6 @@ class _LoginPageState extends State<LoginPage> {
                           ),
                         ],
                       ),
-
                       const SizedBox(height: 8),
                       SizedBox(
                         width: double.infinity,
@@ -354,14 +404,12 @@ class _LoginPageState extends State<LoginPage> {
                                 ),
                         ),
                       ),
-
                       const SizedBox(height: 15),
                       const Text(
                         "O continuar con",
                         style: TextStyle(color: Colors.white),
                       ),
                       const SizedBox(height: 10),
-
                       Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
@@ -378,16 +426,26 @@ class _LoginPageState extends State<LoginPage> {
                             ),
                           ),
                           const SizedBox(width: 20),
+                          InkWell(
+                            onTap: _loginWithFacebook,
+                            child: CircleAvatar(
+                              radius: 22,
+                              backgroundColor: Colors.white,
+                              child: Icon(
+                                Icons.facebook,
+                                color: Colors.blue[800],
+                                size: 26,
+                              ),
+                            ),
+                          ),
                         ],
                       ),
-
                       const SizedBox(height: 20),
                       const Text(
                         '¿No tienes cuenta?',
                         style: TextStyle(color: Colors.white),
                       ),
                       const SizedBox(height: 6),
-
                       OutlinedButton(
                         onPressed: () => Get.to(() => const RegisterPage()),
                         style: OutlinedButton.styleFrom(
