@@ -14,7 +14,7 @@ dependencies:
   cupertino_icons: ^1.0.8
 
   get: ^4.7.2
-  intl: ^0.18.1   # <-- Para manejar fechas
+  intl: ^0.18.1 # <-- Para manejar fechas
 
   # Firebase y servicios
   firebase_core: ^3.8.0
@@ -24,11 +24,15 @@ dependencies:
 
   # Image Picker
   image_picker: ^1.1.2
+  shared_preferences: ^2.2.2
+  google_sign_in: ^6.2.1
+  flutter_facebook_auth: ^6.0.3
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_lints: ^5.0.0
+  flutter_launcher_icons: ^0.13.1
 
 flutter:
   uses-material-design: true
@@ -36,3 +40,8 @@ flutter:
     - assets/tortilla.png
     - assets/usuarios.json
     - assets/avatar.png
+
+flutter_icons:
+  android: true
+  ios: true
+  image_path: "assets/Icono1.png"

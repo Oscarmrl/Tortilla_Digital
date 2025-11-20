@@ -4,6 +4,8 @@ import 'package:firebase_storage/firebase_storage.dart';
 import 'package:image_picker/image_picker.dart';
 import 'dart:io';
 import 'package:path/path.dart' as path;
+import 'package:tortilla_digital/Usuario/pantalla_mis_recetas.dart';
+import 'package:tortilla_digital/Usuario/pantalla_mis_solicitudes.dart';
 
 class PantallaConfiguracion extends StatefulWidget {
   final String userId;
@@ -277,6 +279,25 @@ class _PantallaConfiguracionState extends State<PantallaConfiguracion> {
                           onTap: () => _editField('nombre', nombre),
                         ),
                         const Divider(height: 1, color: Color(0xFFECECEC)),
+                        ListTile(
+                          leading: Icon(
+                            Icons.receipt_long,
+                            color: Colors.grey[700],
+                          ),
+                          title: const Text(
+                            "Mis recetas enviadas",
+                            style: TextStyle(color: Colors.black87),
+                          ),
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => const PantallaMisSolicitudes(),
+                              ),
+                            );
+                          },
+                        ),
+
                         ListTile(
                           leading: Icon(
                             Icons.email_outlined,

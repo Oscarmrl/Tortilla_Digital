@@ -3,8 +3,11 @@ import 'package:get/get.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:tortilla_digital/Administrador/admin_home.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:tortilla_digital/register_page.dart';
 import 'package:tortilla_digital/Usuario/pantallainicio.dart';
+import 'package:google_sign_in/google_sign_in.dart';
+import 'package:flutter_facebook_auth/flutter_facebook_auth.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -24,8 +27,159 @@ class _LoginPageState extends State<LoginPage> {
   void initState() {
     super.initState();
     _auth = FirebaseAuth.instance;
+    _loadSavedCredentials();
   }
 
+  // -------------------------------------------------------------
+  // 🔥 LOGIN CON GOOGLE (Ahora crea el documento en Firestore)
+  // -------------------------------------------------------------
+  Future<void> _loginWithGoogle() async {
+    try {
+      final googleUser = await GoogleSignIn().signIn();
+      if (googleUser == null) return; // Usuario canceló
+
+      final googleAuth = await googleUser.authentication;
+
+      final credential = GoogleAuthProvider.credential(
+        accessToken: googleAuth.accessToken,
+        idToken: googleAuth.idToken,
+      );
+
+      final userCredential = await FirebaseAuth.instance.signInWithCredential(
+        credential,
+      );
+
+      final uid = userCredential.user!.uid;
+
+      // 🔥 VERIFICAR SI EL USUARIO YA EXISTE EN FIRESTORE
+      final userDoc = await FirebaseFirestore.instance
+          .collection('usuarios')
+          .doc(uid)
+          .get();
+
+      if (!userDoc.exists) {
+        // 🔥 CREAR DOCUMENTO SI ES LA PRIMERA VEZ
+        await FirebaseFirestore.instance.collection('usuarios').doc(uid).set({
+          'nombre': userCredential.user!.displayName ?? 'Usuario',
+          'correo': userCredential.user!.email,
+          'rol': 'Cliente', // Rol por defecto
+          'fechaRegistro': FieldValue.serverTimestamp(),
+          'metodRegistro': 'Google',
+        });
+      }
+
+      _redirectUser(uid);
+    } catch (e) {
+      _showMessage("Error con Google: $e");
+    }
+  }
+
+  // -------------------------------------------------------------
+  // 🔥 LOGIN CON FACEBOOK (Ahora crea el documento en Firestore)
+  // -------------------------------------------------------------
+  Future<void> _loginWithFacebook() async {
+    try {
+      final result = await FacebookAuth.instance.login();
+
+      if (result.status == LoginStatus.success) {
+        final token = result.accessToken!;
+        final credential = FacebookAuthProvider.credential(token.token);
+
+        final userCredential = await FirebaseAuth.instance.signInWithCredential(
+          credential,
+        );
+
+        final uid = userCredential.user!.uid;
+
+        // 🔥 VERIFICAR SI EL USUARIO YA EXISTE EN FIRESTORE
+        final userDoc = await FirebaseFirestore.instance
+            .collection('usuarios')
+            .doc(uid)
+            .get();
+
+        if (!userDoc.exists) {
+          // 🔥 CREAR DOCUMENTO SI ES LA PRIMERA VEZ
+          await FirebaseFirestore.instance.collection('usuarios').doc(uid).set({
+            'nombre': userCredential.user!.displayName ?? 'Usuario',
+            'correo': userCredential.user!.email,
+            'rol': 'Usuario',
+            'fechaRegistro': FieldValue.serverTimestamp(),
+            'metodRegistro': 'Facebook',
+          });
+        }
+
+        _redirectUser(uid);
+      } else {
+        _showMessage("Error en Facebook: ${result.message}");
+      }
+    } catch (e) {
+      _showMessage("Error con Facebook: $e");
+    }
+  }
+
+  // -------------------------------------------------------------
+  // 🔥 REDIRIGIR SEGÚN ROL
+  // -------------------------------------------------------------
+  Future<void> _redirectUser(String uid) async {
+    final userDoc = await FirebaseFirestore.instance
+        .collection('usuarios')
+        .doc(uid)
+        .get();
+
+    if (!userDoc.exists) {
+      _showMessage("No se encontró información del usuario");
+      return;
+    }
+
+    final rol = userDoc.data()!['rol'];
+    final nombre = userDoc.data()?['nombre'] ?? 'Usuario';
+
+    if (rol == 'Admin') {
+      Get.off(() => const AdminHomeScreen());
+    } else {
+      Get.off(() => PantallaInicio(nombreUsuario: nombre, userId: uid));
+    }
+  }
+
+  // -------------------------------------------------------------
+  // 🔥 CARGAR CREDENCIALES GUARDADAS
+  // -------------------------------------------------------------
+  Future<void> _loadSavedCredentials() async {
+    final prefs = await SharedPreferences.getInstance();
+
+    final savedEmail = prefs.getString('saved_email');
+    final savedPassword = prefs.getString('saved_password');
+    final remember = prefs.getBool('remember_me') ?? false;
+
+    if (remember && savedEmail != null && savedPassword != null) {
+      _emailController.text = savedEmail;
+      _passwordController.text = savedPassword;
+      setState(() {
+        _rememberMe = true;
+      });
+    }
+  }
+
+  // -------------------------------------------------------------
+  // 🔥 GUARDAR O ELIMINAR DATOS SEGÚN CHECKBOX
+  // -------------------------------------------------------------
+  Future<void> _handleRememberMe(String email, String password) async {
+    final prefs = await SharedPreferences.getInstance();
+
+    if (_rememberMe) {
+      await prefs.setString('saved_email', email);
+      await prefs.setString('saved_password', password);
+      await prefs.setBool('remember_me', true);
+    } else {
+      await prefs.remove('saved_email');
+      await prefs.remove('saved_password');
+      await prefs.setBool('remember_me', false);
+    }
+  }
+
+  // -------------------------------------------------------------
+  // 🔥 LOGIN CON EMAIL Y CONTRASEÑA
+  // -------------------------------------------------------------
   Future<void> _login() async {
     final email = _emailController.text.trim();
     final password = _passwordController.text.trim();
@@ -42,6 +196,9 @@ class _LoginPageState extends State<LoginPage> {
         email: email,
         password: password,
       );
+
+      // 🔥 Guardar o borrar datos
+      await _handleRememberMe(email, password);
 
       final uid = userCredential.user!.uid;
 
@@ -64,26 +221,34 @@ class _LoginPageState extends State<LoginPage> {
         }
 
         final data = query.docs.first.data();
-        final rol = data['rol'];
-        final nombre = data['nombre'] ?? 'Usuario';
+        final rol = data['rol'] ?? '';
 
         if (rol == 'Admin') {
           Get.off(() => const AdminHomeScreen());
         } else {
-          Get.off(() => PantallaInicio(nombreUsuario: nombre, userId: ''));
+          Get.off(
+            () => PantallaInicio(
+              userId: uid,
+              nombreUsuario: data['nombre'] ?? 'Usuario',
+            ),
+          );
         }
         return;
       }
 
+      // Documento principal existe
       final data = userDoc.data()!;
-      final rol = data['rol'];
-      final nombre = data['nombre'] ?? 'Usuario';
+      final rol = data['rol'] ?? '';
 
       if (rol == 'Admin') {
         Get.off(() => const AdminHomeScreen());
       } else {
-        // Navegación con paso de parámetro usando Get
-        Get.off(() => PantallaInicio(nombreUsuario: nombre, userId: uid));
+        Get.off(
+          () => PantallaInicio(
+            userId: uid,
+            nombreUsuario: data['nombre'] ?? 'Usuario',
+          ),
+        );
       }
     } on FirebaseAuthException catch (e) {
       String errorMsg = "Error al iniciar sesión";
@@ -95,6 +260,8 @@ class _LoginPageState extends State<LoginPage> {
         errorMsg = "Correo inválido";
       }
       _showMessage(errorMsg);
+    } catch (e) {
+      _showMessage("Ocurrió un error: ${e.toString()}");
     } finally {
       setState(() => _loading = false);
     }
@@ -134,7 +301,6 @@ class _LoginPageState extends State<LoginPage> {
               ],
             ),
             child: Column(
-              mainAxisSize: MainAxisSize.min,
               children: [
                 const SizedBox(height: 30),
                 const CircleAvatar(
@@ -238,7 +404,43 @@ class _LoginPageState extends State<LoginPage> {
                                 ),
                         ),
                       ),
+                      const SizedBox(height: 15),
+                      const Text(
+                        "O continuar con",
+                        style: TextStyle(color: Colors.white),
+                      ),
                       const SizedBox(height: 10),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          InkWell(
+                            onTap: _loginWithGoogle,
+                            child: CircleAvatar(
+                              radius: 22,
+                              backgroundColor: Colors.white,
+                              child: Icon(
+                                Icons.g_translate,
+                                color: Colors.red,
+                                size: 26,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 20),
+                          InkWell(
+                            onTap: _loginWithFacebook,
+                            child: CircleAvatar(
+                              radius: 22,
+                              backgroundColor: Colors.white,
+                              child: Icon(
+                                Icons.facebook,
+                                color: Colors.blue[800],
+                                size: 26,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 20),
                       const Text(
                         '¿No tienes cuenta?',
                         style: TextStyle(color: Colors.white),
