@@ -31,6 +31,7 @@ class _AdminHomeScreenState extends State<AdminHomeScreen> {
     QuerySnapshot snapshot = await recetasRef
         .where('esAprovada', isEqualTo: true)
         .get();
+
     List<QueryDocumentSnapshot> resultados = snapshot.docs.where((doc) {
       String titulo = (doc.data() as Map<String, dynamic>)['titulo'] ?? '';
       return titulo.toLowerCase().contains(texto.toLowerCase());
@@ -48,66 +49,67 @@ class _AdminHomeScreenState extends State<AdminHomeScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFB7DB88),
+      backgroundColor: Colors.white,
       appBar: AppBar(
-        title: const Text(
-          'Panel de Administrador',
-          style: TextStyle(fontWeight: FontWeight.bold),
-        ),
-        backgroundColor: const Color(0xFF3C814E),
+        elevation: 0,
+        backgroundColor: Colors.white,
         centerTitle: true,
+        title: const Text(
+          "Panel de Administrador",
+          style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
+        ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.logout),
+            icon: const Icon(Icons.logout, color: Colors.black87),
             onPressed: () => _cerrarSesion(context),
           ),
         ],
       ),
       body: Padding(
-        padding: const EdgeInsets.all(16.0),
+        padding: const EdgeInsets.all(20.0),
         child: ListView(
           children: [
             const SizedBox(height: 10),
-            Row(
-              children: [
-                Expanded(
-                  child: TextField(
-                    controller: buscarController,
-                    decoration: InputDecoration(
-                      hintText: 'Buscar recetas...',
-                      prefixIcon: const Icon(Icons.search),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(25),
-                      ),
-                      filled: true,
-                      fillColor: Colors.white,
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 10),
-                ElevatedButton(
-                  onPressed: () => _buscarRecetas(context),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF3C814E),
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 20,
-                      vertical: 15,
-                    ),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(25),
-                    ),
-                  ),
-                  child: const Text(
-                    'Buscar',
-                    style: TextStyle(fontWeight: FontWeight.bold),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 25),
 
+            // 🔎 BARRA DE BÚSQUEDA ESTILO MODERNO
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              decoration: BoxDecoration(
+                color: Colors.grey[100],
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: Row(
+                children: [
+                  const Icon(Icons.search, color: Colors.grey),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: TextField(
+                      controller: buscarController,
+                      decoration: const InputDecoration(
+                        hintText: 'Buscar recetas...',
+                        border: InputBorder.none,
+                      ),
+                    ),
+                  ),
+                  GestureDetector(
+                    onTap: () => _buscarRecetas(context),
+                    child: Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFFFC107),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: const Icon(Icons.tune, color: Colors.black),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
+            const SizedBox(height: 30),
+
+            // 📌 TARJETAS DEL ADMIN
             _adminCard(
-              context,
               icon: Icons.restaurant_menu,
               title: 'Ver Recetas',
               subtitle: 'Lista completa de recetas publicadas',
@@ -124,7 +126,6 @@ class _AdminHomeScreenState extends State<AdminHomeScreen> {
               },
             ),
             _adminCard(
-              context,
               icon: Icons.pending_actions,
               title: 'Ver Solicitudes',
               subtitle: 'Recetas enviadas por los usuarios',
@@ -138,7 +139,6 @@ class _AdminHomeScreenState extends State<AdminHomeScreen> {
               },
             ),
             _adminCard(
-              context,
               icon: Icons.add_box,
               title: 'Agregar Receta',
               subtitle: 'Agregar receta manualmente',
@@ -152,7 +152,6 @@ class _AdminHomeScreenState extends State<AdminHomeScreen> {
               },
             ),
             _adminCard(
-              context,
               icon: Icons.person_add,
               title: 'Nuevo Administrador',
               subtitle: 'Registrar un nuevo administrador',
@@ -169,28 +168,63 @@ class _AdminHomeScreenState extends State<AdminHomeScreen> {
     );
   }
 
-  Widget _adminCard(
-    BuildContext context, {
+  // 🎨 TARJETAS MODERNAS COMO LA PANTALLA DE USUARIO
+  Widget _adminCard({
     required IconData icon,
     required String title,
     required String subtitle,
     required VoidCallback onTap,
   }) {
-    return Card(
-      color: Colors.white,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-      elevation: 3,
-      margin: const EdgeInsets.symmetric(vertical: 10),
-      child: ListTile(
-        leading: Icon(
-          icon,
-          color: const Color.fromARGB(255, 230, 136, 4),
-          size: 30,
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 18),
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(18),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.05),
+              blurRadius: 12,
+              offset: const Offset(0, 4),
+            ),
+          ],
         ),
-        title: Text(title, style: const TextStyle(fontWeight: FontWeight.bold)),
-        subtitle: Text(subtitle),
-        trailing: const Icon(Icons.arrow_forward_ios),
-        onTap: onTap,
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(14),
+              decoration: BoxDecoration(
+                color: const Color(0xFFFFC107).withOpacity(0.2),
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: Icon(icon, size: 30, color: Colors.black87),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: const TextStyle(
+                      fontSize: 17,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(subtitle, style: TextStyle(color: Colors.grey[600])),
+                ],
+              ),
+            ),
+            const Icon(
+              Icons.arrow_forward_ios,
+              size: 18,
+              color: Colors.black87,
+            ),
+          ],
+        ),
       ),
     );
   }
