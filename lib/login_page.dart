@@ -2,12 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:tortilla_digital/Administrador/admin_home.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:google_sign_in/google_sign_in.dart';
+import 'package:tortilla_digital/Administrador/admin_home.dart';
 import 'package:tortilla_digital/register_page.dart';
 import 'package:tortilla_digital/Usuario/pantallainicio.dart';
-import 'package:google_sign_in/google_sign_in.dart';
-import 'package:flutter_facebook_auth/flutter_facebook_auth.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -27,16 +26,47 @@ class _LoginPageState extends State<LoginPage> {
   void initState() {
     super.initState();
     _auth = FirebaseAuth.instance;
-    _loadSavedCredentials(); // ⬅️ Cargar usuario guardado
+    _checkAutoLogin();
+    _loadSavedCredentials();
   }
 
+  // ---------------- AUTO LOGIN ----------------
+  Future<void> _checkAutoLogin() async {
+    final prefs = await SharedPreferences.getInstance();
+    final isLogged = prefs.getBool('is_logged_in') ?? false;
+
+    if (!isLogged) return;
+
+    final uid = prefs.getString('user_id');
+    if (uid == null || uid.isEmpty) return;
+
+    try {
+      final userDoc = await FirebaseFirestore.instance
+          .collection('usuarios')
+          .doc(uid)
+          .get();
+
+      if (!userDoc.exists) return;
+
+      final rol = userDoc.data()?['rol'];
+      if (rol == 'Admin') {
+        Get.off(() => const AdminHomeScreen());
+      } else {
+        Get.off(() => PantallaInicio(userId: uid, nombreUsuario: ''));
+      }
+    } catch (_) {
+      // si hay error no hacer nada
+    }
+  }
+
+  // ---------------- GOOGLE LOGIN ----------------
   Future<void> _loginWithGoogle() async {
     try {
+      setState(() => _loading = true);
       final googleUser = await GoogleSignIn().signIn();
-      if (googleUser == null) return; // Usuario canceló
+      if (googleUser == null) return; // cancelado
 
       final googleAuth = await googleUser.authentication;
-
       final credential = GoogleAuthProvider.credential(
         accessToken: googleAuth.accessToken,
         idToken: googleAuth.idToken,
@@ -46,79 +76,76 @@ class _LoginPageState extends State<LoginPage> {
         credential,
       );
 
-      _redirectUser(userCredential.user!.uid); // Redirige según Firestore
+      final uid = userCredential.user!.uid;
+      await _saveLoginInfo(uid); // guarda sesión
+      await _ensureUserDocExists(uid, userCredential.user);
+
+      _redirectUser(uid);
     } catch (e) {
       _showMessage("Error con Google: $e");
+    } finally {
+      setState(() => _loading = false);
     }
   }
 
-  Future<void> _loginWithFacebook() async {
-    try {
-      final result = await FacebookAuth.instance.login();
-
-      if (result.status == LoginStatus.success) {
-        final token = result.accessToken!;
-        final credential = FacebookAuthProvider.credential(token.token);
-
-        final userCredential = await FirebaseAuth.instance.signInWithCredential(
-          credential,
-        );
-
-        _redirectUser(userCredential.user!.uid); // Redirige según Firestore
-      } else {
-        _showMessage("Error en Facebook: ${result.message}");
-      }
-    } catch (e) {
-      _showMessage("Error con Facebook: $e");
-    }
-  }
-
-  Future<void> _redirectUser(String uid) async {
-    final userDoc = await FirebaseFirestore.instance
-        .collection('usuarios')
-        .doc(uid)
-        .get();
-
-    if (!userDoc.exists) {
-      _showMessage("No se encontró información del usuario");
-      return;
-    }
-
-    final rol = userDoc.data()!['rol'];
-    final nombre = userDoc.data()?['nombre'] ?? 'Usuario';
-
-    if (rol == 'Admin') {
-      Get.offNamed('/adminPage');
-    } else {
-      Get.off(() => PantallaInicio(nombreUsuario: nombre, userId: ''));
-    }
-  }
-
-  // -------------------------------------------------------------
-  // 🔥 Cargar correo/contraseña guardados
-  // -------------------------------------------------------------
-  Future<void> _loadSavedCredentials() async {
-    final prefs = await SharedPreferences.getInstance();
-
-    final savedEmail = prefs.getString('saved_email');
-    final savedPassword = prefs.getString('saved_password');
-    final remember = prefs.getBool('remember_me') ?? false;
-
-    if (remember && savedEmail != null && savedPassword != null) {
-      _emailController.text = savedEmail;
-      _passwordController.text = savedPassword;
-      setState(() {
-        _rememberMe = true;
+  // helper: si quieres crear doc de usuario en Firestore si no existe (opcional)
+  Future<void> _ensureUserDocExists(String uid, User? user) async {
+    if (user == null) return;
+    final docRef = FirebaseFirestore.instance.collection('usuarios').doc(uid);
+    final snap = await docRef.get();
+    if (!snap.exists) {
+      await docRef.set({
+        'nombre': user.displayName ?? '',
+        'correo': user.email ?? '',
+        'imagen': user.photoURL ?? '',
+        'rol': 'Usuario',
+        'favoritos': [],
+        'historial': [],
+        'fecha_creacion': FieldValue.serverTimestamp(),
       });
     }
   }
 
-  // -------------------------------------------------------------
-  // 🔥 Guardar o eliminar datos según el checkbox
-  // -------------------------------------------------------------
+  // ---------------- REDIRECCION SEGÚN ROL ----------------
+  Future<void> _redirectUser(String uid) async {
+    try {
+      final userDoc = await FirebaseFirestore.instance
+          .collection('usuarios')
+          .doc(uid)
+          .get();
+
+      if (!userDoc.exists) {
+        _showMessage("No se encontró información del usuario");
+        return;
+      }
+
+      final data = userDoc.data()!;
+      final rol = data['rol'];
+      final nombre = data['nombre'] ?? "Usuario";
+
+      if (rol == "Admin") {
+        Get.off(() => const AdminHomeScreen());
+      } else {
+        Get.off(() => PantallaInicio(userId: uid, nombreUsuario: nombre));
+      }
+    } catch (e) {
+      _showMessage("Error al obtener usuario: $e");
+    }
+  }
+
+  // ---------------- CARGAR CREDENCIALES GUARDADAS ----------------
+  Future<void> _loadSavedCredentials() async {
+    final prefs = await SharedPreferences.getInstance();
+    if (prefs.getBool('remember_me') ?? false) {
+      _emailController.text = prefs.getString('saved_email') ?? "";
+      _passwordController.text = prefs.getString('saved_password') ?? "";
+      setState(() => _rememberMe = true);
+    }
+  }
+
+  // ---------------- GUARDAR "RECUÉRDAME" ----------------
   Future<void> _handleRememberMe(String email, String password) async {
     final prefs = await SharedPreferences.getInstance();
-
     if (_rememberMe) {
       await prefs.setString('saved_email', email);
       await prefs.setString('saved_password', password);
@@ -130,9 +157,13 @@ class _LoginPageState extends State<LoginPage> {
     }
   }
 
-  // -------------------------------------------------------------
-  // 🔥 Tu login original (solo añadí el llamado a guardar datos)
-  // -------------------------------------------------------------
+  Future<void> _saveLoginInfo(String uid) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('is_logged_in', true);
+    await prefs.setString('user_id', uid);
+  }
+
+  // ---------------- LOGIN CON EMAIL/PASSWORD ----------------
   Future<void> _login() async {
     final email = _emailController.text.trim();
     final password = _passwordController.text.trim();
@@ -145,80 +176,43 @@ class _LoginPageState extends State<LoginPage> {
     try {
       setState(() => _loading = true);
 
-      UserCredential userCredential = await _auth.signInWithEmailAndPassword(
+      final userCredential = await _auth.signInWithEmailAndPassword(
         email: email,
         password: password,
       );
 
-      // 🔥 Guardar o borrar datos
-      await _handleRememberMe(email, password);
-
       final uid = userCredential.user!.uid;
 
-      final userDocRef = FirebaseFirestore.instance
-          .collection('usuarios')
-          .doc(uid);
-      final userDoc = await userDocRef.get();
-
-      if (!userDoc.exists) {
-        // Backup: buscar por correo
-        final query = await FirebaseFirestore.instance
-            .collection('usuarios')
-            .where('correo', isEqualTo: email)
-            .limit(1)
-            .get();
-
-        if (query.docs.isEmpty) {
-          _showMessage("No se encontró información del usuario");
-          return;
-        }
-
-        final data = query.docs.first.data();
-        final rol = data['rol'] ?? '';
-
-        if (rol == 'Admin') {
-          Get.off(() => const AdminHomeScreen());
-        } else {
-          Get.off(
-            () => PantallaInicio(
-              userId: '',
-              nombreUsuario: '', // no tenemos uid en este backup
-            ),
-          );
-        }
-        return;
-      }
-
-      // Documento principal existe
-      final data = userDoc.data()!;
-      final rol = data['rol'] ?? '';
-
-      if (rol == 'Admin') {
-        Get.off(() => const AdminHomeScreen());
+      // Guardar datos según checkbox
+      await _handleRememberMe(email, password);
+      if (_rememberMe) {
+        await _saveLoginInfo(uid);
       } else {
-        // Navegación con paso de parámetro usando Get
-        Get.off(() => PantallaInicio(userId: uid, nombreUsuario: ''));
+        // Si no quiere recordar, aseguramos limpiar is_logged_in
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setBool('is_logged_in', false);
+        await prefs.remove('user_id');
       }
+
+      // redirigir por rol
+      _redirectUser(uid);
     } on FirebaseAuthException catch (e) {
-      String errorMsg = "Error al iniciar sesión";
-      if (e.code == 'user-not-found') {
-        errorMsg = "Usuario no encontrado";
-      } else if (e.code == 'wrong-password') {
-        errorMsg = "Contraseña incorrecta";
-      } else if (e.code == 'invalid-email') {
-        errorMsg = "Correo inválido";
-      }
-      _showMessage(errorMsg);
+      String msg = "Error al iniciar sesión";
+      if (e.code == "user-not-found") msg = "Usuario no encontrado";
+      if (e.code == "wrong-password") msg = "Contraseña incorrecta";
+      if (e.code == "invalid-email") msg = "Correo inválido";
+      _showMessage(msg);
     } catch (e) {
-      _showMessage("Ocurrió un error: ${e.toString()}");
+      _showMessage("Error: $e");
     } finally {
       setState(() => _loading = false);
     }
   }
 
+  // ---------------- ALERTA ----------------
   void _showMessage(String message) {
     Get.snackbar(
-      'Aviso',
+      "Aviso",
       message,
       backgroundColor: Colors.redAccent,
       colorText: Colors.white,
@@ -226,191 +220,310 @@ class _LoginPageState extends State<LoginPage> {
     );
   }
 
+  // ---------------- UI: Diseño según imagen ----------------
   @override
   Widget build(BuildContext context) {
+    // Paleta basada en la imagen
+    const Color pageBg = Color.fromARGB(255, 255, 254, 254); // crema claro
+    const Color accentPeach = Color(0xFFFFC107); // botón durazno
+    const Color inputBorder = Color(0xFFDDD6C8);
+    const Color smallText = Color(0xFFB58F6A);
+
     return Scaffold(
-      backgroundColor: const Color(0xFFB7DB88),
-      body: Center(
-        child: SingleChildScrollView(
-          child: Container(
-            width: 320,
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(24),
-              gradient: const LinearGradient(
-                colors: [Color(0xFFFFD966), Color(0xFF9AC17D)],
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-              ),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.2),
-                  blurRadius: 10,
-                  offset: const Offset(0, 5),
-                ),
-              ],
-            ),
+      backgroundColor: pageBg,
+      body: SafeArea(
+        child: Center(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 20),
             child: Column(
+              mainAxisSize: MainAxisSize.min,
               children: [
-                const SizedBox(height: 30),
-                const CircleAvatar(
-                  radius: 40,
-                  backgroundColor: Colors.white,
-                  backgroundImage: AssetImage('assets/tortilla.png'),
-                ),
-                const SizedBox(height: 12),
-                const Text(
-                  '¡Bienvenidos!',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 22,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const SizedBox(height: 20),
-                Container(
-                  decoration: const BoxDecoration(
-                    color: Color(0xFF3C814E),
-                    borderRadius: BorderRadius.vertical(
-                      bottom: Radius.circular(24),
+                // pequeño back arrow (como en la imagen)
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: IconButton(
+                    padding: EdgeInsets.zero,
+                    onPressed: () => Navigator.of(context).maybePop(),
+                    icon: const Icon(
+                      Icons.arrow_back_ios,
+                      size: 20,
+                      color: Colors.black87,
                     ),
                   ),
+                ),
+
+                const SizedBox(height: 6),
+
+                // Logo + texto
+                Column(
+                  children: [
+                    // logo asset
+                    const CircleAvatar(
+                      radius: 36,
+                      backgroundColor: Colors.white,
+                      backgroundImage: AssetImage('assets/tortilla.png'),
+                    ),
+                    const SizedBox(height: 10),
+                    const Text(
+                      'Tortilla Digital',
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.w700,
+                        color: Colors.black87,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    const Text(
+                      'Bienvenido de nuevo.',
+                      style: TextStyle(color: smallText, fontSize: 13),
+                    ),
+                  ],
+                ),
+
+                const SizedBox(height: 28),
+
+                // Card estilo minimalista con inputs y botón
+                Container(
+                  width: double.infinity,
+                  constraints: const BoxConstraints(maxWidth: 420),
                   padding: const EdgeInsets.symmetric(
-                    horizontal: 24,
+                    horizontal: 22,
                     vertical: 20,
                   ),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(12),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black12,
+                        blurRadius: 12,
+                        offset: Offset(0, 6),
+                      ),
+                    ],
+                  ),
                   child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      TextField(
-                        controller: _emailController,
-                        keyboardType: TextInputType.emailAddress,
-                        decoration: InputDecoration(
-                          hintText: 'Correo',
-                          prefixIcon: const Icon(Icons.email_outlined),
-                          filled: true,
-                          fillColor: Colors.white,
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(24),
-                            borderSide: BorderSide.none,
-                          ),
+                      const Text(
+                        'Login',
+                        style: TextStyle(
+                          fontSize: 22,
+                          fontWeight: FontWeight.bold,
                         ),
+                      ),
+                      const SizedBox(height: 14),
+
+                      // Usuario
+                      _styledInput(
+                        controller: _emailController,
+                        hint: 'Correo',
+                        icon: Icons.person_outline,
+                        borderColor: inputBorder,
                       ),
                       const SizedBox(height: 12),
-                      TextField(
+
+                      // Contraseña
+                      _styledInput(
                         controller: _passwordController,
-                        obscureText: true,
-                        decoration: InputDecoration(
-                          hintText: 'Contraseña',
-                          prefixIcon: const Icon(Icons.lock_outline),
-                          filled: true,
-                          fillColor: Colors.white,
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(24),
-                            borderSide: BorderSide.none,
-                          ),
-                        ),
+                        hint: 'Contraseña',
+                        icon: Icons.lock_outline,
+                        obscure: true,
+                        borderColor: inputBorder,
                       ),
-                      const SizedBox(height: 8),
+
+                      const SizedBox(height: 10),
+
+                      // Recuerdame y olvide?
                       Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          Checkbox(
-                            value: _rememberMe,
-                            onChanged: (value) {
-                              setState(() {
-                                _rememberMe = value!;
-                              });
-                            },
-                            activeColor: const Color(0xFFFFD966),
+                          Row(
+                            children: [
+                              Checkbox(
+                                value: _rememberMe,
+                                onChanged: (v) =>
+                                    setState(() => _rememberMe = v ?? false),
+                                activeColor: accentPeach,
+                              ),
+                              const Text('Recuérdame'),
+                            ],
                           ),
-                          const Text(
-                            'Recuérdame',
-                            style: TextStyle(color: Colors.white),
+                          TextButton(
+                            onPressed: () {
+                              // placeholder: podrías implementar recuperación
+                              _showMessage(
+                                "Funcionalidad de recuperar contraseña",
+                              );
+                            },
+                            child: const Text(
+                              'Olvidé contraseña',
+                              style: TextStyle(color: Colors.black54),
+                            ),
                           ),
                         ],
                       ),
 
-                      const SizedBox(height: 8),
+                      const SizedBox(height: 6),
+
+                      // Botón Login
                       SizedBox(
-                        width: double.infinity,
+                        height: 48,
                         child: ElevatedButton(
                           onPressed: _loading ? null : _login,
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFF2F6E41),
+                            backgroundColor: accentPeach,
+                            foregroundColor: Colors.black,
                             shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(20),
+                              borderRadius: BorderRadius.circular(10),
                             ),
-                            padding: const EdgeInsets.symmetric(vertical: 12),
                           ),
                           child: _loading
-                              ? const CircularProgressIndicator(
-                                  color: Colors.white,
+                              ? const SizedBox(
+                                  width: 20,
+                                  height: 20,
+                                  child: CircularProgressIndicator(
+                                    color: Colors.white,
+                                  ),
                                 )
                               : const Text(
-                                  'Iniciar Sesión',
+                                  'Login',
                                   style: TextStyle(
-                                    color: Colors.white,
                                     fontSize: 16,
-                                    fontWeight: FontWeight.bold,
+                                    fontWeight: FontWeight.w600,
                                   ),
                                 ),
                         ),
                       ),
 
-                      const SizedBox(height: 15),
-                      const Text(
-                        "O continuar con",
-                        style: TextStyle(color: Colors.white),
+                      const SizedBox(height: 14),
+
+                      const Center(
+                        child: Text(
+                          'O continuar con',
+                          style: TextStyle(color: Colors.black54),
+                        ),
                       ),
+
                       const SizedBox(height: 10),
 
+                      // Botones sociales (Apple + Google) — estilo redondo
                       Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
+                          const SizedBox(width: 18),
+
+                          // Google (funcional)
                           InkWell(
                             onTap: _loginWithGoogle,
-                            child: CircleAvatar(
-                              radius: 22,
-                              backgroundColor: Colors.white,
-                              child: Icon(
-                                Icons.g_translate,
-                                color: Colors.red,
-                                size: 26,
+                            child: Container(
+                              padding: const EdgeInsets.all(10),
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                shape: BoxShape.circle,
+                                border: Border.all(color: inputBorder),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.black12,
+                                    blurRadius: 6,
+                                  ),
+                                ],
+                              ),
+                              child: Image.asset(
+                                'assets/google_icon.png',
+                                width: 20,
+                                height: 20,
+                                // Si no tienes el asset, puedes usar Icon(Icons.g_translate)
+                                errorBuilder: (context, error, stackTrace) =>
+                                    const Icon(
+                                      Icons.g_translate,
+                                      color: Colors.red,
+                                    ),
                               ),
                             ),
                           ),
-                          const SizedBox(width: 20),
                         ],
                       ),
 
-                      const SizedBox(height: 20),
-                      const Text(
-                        '¿No tienes cuenta?',
-                        style: TextStyle(color: Colors.white),
-                      ),
-                      const SizedBox(height: 6),
+                      const SizedBox(height: 18),
 
-                      OutlinedButton(
-                        onPressed: () => Get.to(() => const RegisterPage()),
-                        style: OutlinedButton.styleFrom(
-                          side: const BorderSide(color: Colors.white),
-                          backgroundColor: const Color(0xFF89B76F),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(20),
+                      // Registrar
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          const Text(
+                            '¿No tienes cuenta? ',
+                            style: TextStyle(color: Colors.black87),
                           ),
-                        ),
-                        child: const Text(
-                          'Registrarse',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontWeight: FontWeight.bold,
+                          TextButton(
+                            onPressed: () => Get.to(() => const RegisterPage()),
+                            child: Text(
+                              'Registrarse',
+                              style: TextStyle(
+                                color: accentPeach,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
                           ),
-                        ),
+                        ],
                       ),
                     ],
+                  ),
+                ),
+
+                const SizedBox(height: 18),
+
+                // Pie decorativo (ondas) — simple barra con color
+                Container(
+                  height: 60,
+                  width: double.infinity,
+                  constraints: const BoxConstraints(maxWidth: 420),
+                  decoration: const BoxDecoration(color: Color(0x00FFFFFF)),
+                  child: Align(
+                    alignment: Alignment.bottomCenter,
+                    child: Container(
+                      margin: const EdgeInsets.only(top: 8),
+                      height: 24,
+                      width: 160,
+                      decoration: BoxDecoration(
+                        color: accentPeach.withOpacity(0.25),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
                   ),
                 ),
               ],
             ),
           ),
+        ),
+      ),
+    );
+  }
+
+  // Helper para inputs con bordes como en la imagen
+  Widget _styledInput({
+    required TextEditingController controller,
+    required String hint,
+    required IconData icon,
+    bool obscure = false,
+    Color borderColor = Colors.grey,
+  }) {
+    return Container(
+      decoration: BoxDecoration(
+        border: Border.all(color: borderColor),
+        borderRadius: BorderRadius.circular(8),
+        color: Colors.white,
+      ),
+      child: TextField(
+        controller: controller,
+        obscureText: obscure,
+        decoration: InputDecoration(
+          contentPadding: const EdgeInsets.symmetric(
+            vertical: 14,
+            horizontal: 12,
+          ),
+          hintText: hint,
+          prefixIcon: Icon(icon, color: Colors.black54),
+          border: InputBorder.none,
         ),
       ),
     );

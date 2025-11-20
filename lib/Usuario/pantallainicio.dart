@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:tortilla_digital/Usuario/favoritos_screen.dart';
 import 'package:tortilla_digital/Usuario/pantalla_configuracion.dart';
 import 'package:tortilla_digital/Usuario/pantalla_mis_recetas.dart';
 import 'package:tortilla_digital/Usuario/pantalla_tus_comidas.dart';
@@ -491,7 +492,7 @@ class _PantallaInicioState extends State<PantallaInicio> {
             isSelected: _selectedIndex == 1,
             onTap: () {
               setState(() => _selectedIndex = 1);
-              Get.to(() => const LoginPage());
+              Get.to(() => PantallaFavoritos(userId: widget.userId));
             },
           ),
           _buildBottomNavItem(

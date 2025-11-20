@@ -4,6 +4,9 @@ import 'package:firebase_storage/firebase_storage.dart';
 import 'package:image_picker/image_picker.dart';
 import 'dart:io';
 import 'package:path/path.dart' as path;
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:tortilla_digital/login_page.dart';
 import 'package:tortilla_digital/Usuario/pantalla_mis_recetas.dart';
 import 'package:tortilla_digital/Usuario/pantalla_mis_solicitudes.dart';
 
@@ -26,7 +29,6 @@ class _PantallaConfiguracionState extends State<PantallaConfiguracion> {
         .doc(widget.userId);
   }
 
-  // Convierte Timestamp a texto legible
   String _formatTimestamp(dynamic ts) {
     if (ts == null) return '';
     DateTime dateTime;
@@ -40,7 +42,6 @@ class _PantallaConfiguracionState extends State<PantallaConfiguracion> {
     return '${dateTime.day}/${dateTime.month}/${dateTime.year} ${dateTime.hour}:${dateTime.minute}:${dateTime.second}';
   }
 
-  //Editar un campo de texto (nombre, etc.)
   Future<void> _editField(String field, String currentValue) async {
     final controller = TextEditingController(text: currentValue);
     final result = await showDialog<String?>(
@@ -82,7 +83,6 @@ class _PantallaConfiguracionState extends State<PantallaConfiguracion> {
     }
   }
 
-  //  Mostrar opciones de cámara o galería
   Future<void> _showImagePickerOptions() async {
     showModalBottomSheet(
       context: context,
@@ -96,10 +96,7 @@ class _PantallaConfiguracionState extends State<PantallaConfiguracion> {
             children: [
               ListTile(
                 leading: Icon(Icons.camera_alt, color: Colors.grey[700]),
-                title: const Text(
-                  'Tomar foto',
-                  style: TextStyle(color: Colors.black87),
-                ),
+                title: const Text('Tomar foto'),
                 onTap: () {
                   Navigator.of(context).pop();
                   _pickAndUploadImage(ImageSource.camera);
@@ -107,10 +104,7 @@ class _PantallaConfiguracionState extends State<PantallaConfiguracion> {
               ),
               ListTile(
                 leading: Icon(Icons.photo_library, color: Colors.grey[700]),
-                title: const Text(
-                  'Elegir desde galería',
-                  style: TextStyle(color: Colors.black87),
-                ),
+                title: const Text('Elegir desde galería'),
                 onTap: () {
                   Navigator.of(context).pop();
                   _pickAndUploadImage(ImageSource.gallery);
@@ -123,7 +117,6 @@ class _PantallaConfiguracionState extends State<PantallaConfiguracion> {
     );
   }
 
-  // Tomar/Seleccionar imagen y subir a Firebase Storage
   Future<void> _pickAndUploadImage(ImageSource source) async {
     final picker = ImagePicker();
     final pickedFile = await picker.pickImage(source: source);
@@ -162,7 +155,7 @@ class _PantallaConfiguracionState extends State<PantallaConfiguracion> {
   Widget build(BuildContext context) {
     final background = Colors.white;
     final cardBackground = Colors.white;
-    final accent = const Color(0xFFFFC107); // amber
+    final accent = const Color(0xFFFFC107);
     final surface = const Color(0xFFF5F5F5);
 
     return Scaffold(
@@ -284,10 +277,7 @@ class _PantallaConfiguracionState extends State<PantallaConfiguracion> {
                             Icons.receipt_long,
                             color: Colors.grey[700],
                           ),
-                          title: const Text(
-                            "Mis recetas enviadas",
-                            style: TextStyle(color: Colors.black87),
-                          ),
+                          title: const Text("Mis recetas enviadas"),
                           onTap: () {
                             Navigator.push(
                               context,
@@ -297,7 +287,7 @@ class _PantallaConfiguracionState extends State<PantallaConfiguracion> {
                             );
                           },
                         ),
-
+                        const Divider(height: 1, color: Color(0xFFECECEC)),
                         ListTile(
                           leading: Icon(
                             Icons.email_outlined,
@@ -330,6 +320,45 @@ class _PantallaConfiguracionState extends State<PantallaConfiguracion> {
                       ],
                     ),
                   ),
+
+                  const SizedBox(height: 30),
+
+                  // 🔥 BOTÓN DE CERRAR SESIÓN
+                  ElevatedButton.icon(
+                    onPressed: () async {
+                      final prefs = await SharedPreferences.getInstance();
+                      await prefs
+                          .clear(); // elimina remember_me, email, password, etc.
+                      await FirebaseAuth.instance.signOut();
+
+                      Navigator.pushAndRemoveUntil(
+                        context,
+                        MaterialPageRoute(builder: (_) => const LoginPage()),
+                        (route) => false,
+                      );
+                    },
+                    icon: const Icon(Icons.logout),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.redAccent,
+                      padding: const EdgeInsets.symmetric(
+                        vertical: 14,
+                        horizontal: 24,
+                      ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                    ),
+                    label: const Text(
+                      "Cerrar sesión",
+                      style: TextStyle(
+                        fontSize: 16,
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+
+                  const SizedBox(height: 40),
                 ],
               ),
             );

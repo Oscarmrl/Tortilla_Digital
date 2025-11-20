@@ -38,11 +38,9 @@ class _RegisterPageState extends State<RegisterPage> {
     try {
       setState(() => _loading = true);
 
-      // Crear usuario en Firebase Authentication
       UserCredential userCredential = await _auth
           .createUserWithEmailAndPassword(email: email, password: password);
 
-      // Guardar datos adicionales en Firestore
       await _firestore
           .collection('usuarios')
           .doc(userCredential.user!.uid)
@@ -55,7 +53,7 @@ class _RegisterPageState extends State<RegisterPage> {
           });
 
       _showMessage("Cuenta creada exitosamente 🎉");
-      Navigator.pop(context); // Regresa al login
+      Navigator.pop(context);
     } on FirebaseAuthException catch (e) {
       _showMessage(e.message ?? "Error al registrar usuario");
     } finally {
@@ -72,128 +70,126 @@ class _RegisterPageState extends State<RegisterPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFB7DB88),
+      backgroundColor: const Color.fromARGB(255, 243, 242, 242),
       body: Center(
         child: SingleChildScrollView(
           child: Container(
-            width: 320,
+            width: 330,
+            padding: const EdgeInsets.symmetric(vertical: 30),
             decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(24),
-              gradient: const LinearGradient(
-                colors: [Color(0xFFFFD966), Color(0xFF9AC17D)],
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-              ),
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(32),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.02),
-                  blurRadius: 10,
-                  offset: const Offset(0, 5),
+                  color: Colors.black.withOpacity(0.08),
+                  blurRadius: 12,
+                  offset: const Offset(0, 4),
                 ),
               ],
             ),
             child: Column(
-              mainAxisSize: MainAxisSize.min,
               children: [
-                const SizedBox(height: 30),
                 const CircleAvatar(
-                  radius: 40,
+                  radius: 45,
                   backgroundColor: Colors.white,
                   backgroundImage: AssetImage('assets/tortilla.png'),
                 ),
                 const SizedBox(height: 12),
+
                 const Text(
-                  '¡Tortilla Digital!',
+                  'Tortilla Digital',
                   style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 22,
+                    color: Color(0xFFFFC107),
+                    fontSize: 24,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
+
+                const SizedBox(height: 4),
+
                 const Text(
                   'Crea tu cuenta',
-                  style: TextStyle(color: Colors.white, fontSize: 14),
+                  style: TextStyle(color: Colors.black54, fontSize: 15),
                 ),
-                const SizedBox(height: 20),
 
-                Container(
-                  decoration: const BoxDecoration(
-                    color: Color(0xFF3C814E),
-                    borderRadius: BorderRadius.vertical(
-                      bottom: Radius.circular(24),
-                    ),
-                  ),
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 24,
-                    vertical: 20,
-                  ),
+                const SizedBox(height: 24),
+
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 24),
                   child: Column(
                     children: [
                       _buildTextField(
-                        _nameController,
-                        'Nombre',
-                        Icons.person_outline,
+                        controller: _nameController,
+                        hint: "Nombre completo",
+                        icon: Icons.person_outline,
                       ),
-                      const SizedBox(height: 12),
+                      const SizedBox(height: 14),
+
                       _buildTextField(
-                        _emailController,
-                        'Correo Electrónico',
-                        Icons.email_outlined,
+                        controller: _emailController,
+                        hint: "Correo electrónico",
+                        icon: Icons.email_outlined,
                       ),
-                      const SizedBox(height: 12),
+                      const SizedBox(height: 14),
+
                       _buildTextField(
-                        _passwordController,
-                        'Contraseña',
-                        Icons.lock_outline,
+                        controller: _passwordController,
+                        hint: "Contraseña",
+                        icon: Icons.lock_outline,
                         isPassword: true,
                       ),
-                      const SizedBox(height: 12),
+                      const SizedBox(height: 14),
+
                       _buildTextField(
-                        _confirmPasswordController,
-                        'Confirmar Contraseña',
-                        Icons.lock_outline,
+                        controller: _confirmPasswordController,
+                        hint: "Confirmar contraseña",
+                        icon: Icons.lock_outline,
                         isPassword: true,
                       ),
-                      const SizedBox(height: 20),
+
+                      const SizedBox(height: 26),
 
                       SizedBox(
                         width: double.infinity,
                         child: ElevatedButton(
                           onPressed: _loading ? null : _registerUser,
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFF2F6E41),
+                            backgroundColor: const Color(0xFFFFC107),
+                            elevation: 0,
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(20),
                             ),
-                            padding: const EdgeInsets.symmetric(vertical: 12),
+                            padding: const EdgeInsets.symmetric(vertical: 14),
                           ),
                           child: _loading
                               ? const CircularProgressIndicator(
-                                  color: Colors.white,
+                                  color: Colors.black,
                                 )
                               : const Text(
-                                  'Registrar',
+                                  "Registrar",
                                   style: TextStyle(
-                                    color: Colors.white,
+                                    color: Colors.black87,
                                     fontWeight: FontWeight.bold,
                                     fontSize: 16,
                                   ),
                                 ),
                         ),
                       ),
-                      const SizedBox(height: 16),
+
+                      const SizedBox(height: 20),
 
                       const Text(
-                        '¿Ya tienes cuenta?',
-                        style: TextStyle(color: Colors.white70),
+                        "¿Ya tienes cuenta?",
+                        style: TextStyle(color: Colors.black54),
                       ),
                       const SizedBox(height: 8),
+
                       GestureDetector(
                         onTap: () => Navigator.pop(context),
                         child: const Text(
-                          'Inicia Sesión',
+                          "Inicia sesión",
                           style: TextStyle(
-                            color: Color(0xFFFFD966),
+                            color: Color(0xFFFFC107),
                             fontWeight: FontWeight.bold,
                           ),
                         ),
@@ -209,10 +205,10 @@ class _RegisterPageState extends State<RegisterPage> {
     );
   }
 
-  Widget _buildTextField(
-    TextEditingController controller,
-    String hint,
-    IconData icon, {
+  Widget _buildTextField({
+    required TextEditingController controller,
+    required String hint,
+    required IconData icon,
     bool isPassword = false,
   }) {
     return TextField(
@@ -220,11 +216,11 @@ class _RegisterPageState extends State<RegisterPage> {
       obscureText: isPassword,
       decoration: InputDecoration(
         hintText: hint,
-        prefixIcon: Icon(icon),
         filled: true,
-        fillColor: Colors.white,
+        fillColor: Colors.grey.shade200,
+        prefixIcon: Icon(icon, color: Colors.grey.shade600),
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(24),
+          borderRadius: BorderRadius.circular(20),
           borderSide: BorderSide.none,
         ),
         contentPadding: const EdgeInsets.symmetric(vertical: 14),

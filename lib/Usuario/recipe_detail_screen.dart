@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'favoritos_screen.dart';
 
 class RecipeDetailScreen extends StatefulWidget {
   final String imagenUrl;
@@ -10,6 +11,7 @@ class RecipeDetailScreen extends StatefulWidget {
   final List<String> ingredientes;
   final String idReceta;
   final String userId;
+  final List<String> pasos;
 
   const RecipeDetailScreen({
     super.key,
@@ -21,7 +23,7 @@ class RecipeDetailScreen extends StatefulWidget {
     required this.ingredientes,
     required this.idReceta,
     required this.userId,
-    required List<String> pasos,
+    required this.pasos,
   });
 
   @override
@@ -34,11 +36,45 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
   @override
   void initState() {
     super.initState();
-    // Agregar receta visitada al historial
     agregarRecetaAlHistorial();
+    cargarFavorito();
   }
 
-  /// Guarda automáticamente la receta visitada en Firestore
+  /// Verifica si la receta ya está en favoritos
+  Future<void> cargarFavorito() async {
+    final userDoc = await FirebaseFirestore.instance
+        .collection('usuarios')
+        .doc(widget.userId)
+        .get();
+
+    List favs = userDoc.data()?['favoritos'] ?? [];
+
+    setState(() {
+      isFavorite = favs.contains(widget.idReceta);
+    });
+  }
+
+  /// Quitar de favoritos
+  Future<void> quitarDeFavoritos() async {
+    final userRef = FirebaseFirestore.instance
+        .collection('usuarios')
+        .doc(widget.userId);
+
+    await FirebaseFirestore.instance.runTransaction((transaction) async {
+      final snapshot = await transaction.get(userRef);
+      if (!snapshot.exists) return;
+
+      List favoritos = snapshot.data()?['favoritos'] ?? [];
+
+      favoritos.remove(widget.idReceta);
+
+      transaction.update(userRef, {'favoritos': favoritos});
+    });
+
+    print("❌ Receta eliminada de favoritos");
+  }
+
+  /// Guarda receta en historial
   Future<void> agregarRecetaAlHistorial() async {
     final userRef = FirebaseFirestore.instance
         .collection('usuarios')
@@ -47,22 +83,38 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
     await FirebaseFirestore.instance.runTransaction((transaction) async {
       final snapshot = await transaction.get(userRef);
 
-      if (!snapshot.exists) {
-        print("❌ Usuario no existe.");
-        return;
-      }
+      if (!snapshot.exists) return;
 
       List historial = snapshot.data()?['historial'] ?? [];
 
       historial.add({'idReceta': widget.idReceta, 'fecha': Timestamp.now()});
 
-      // Limitar historial a 10
       if (historial.length > 10) historial.removeAt(0);
 
       transaction.update(userRef, {'historial': historial});
     });
+  }
 
-    print("✔ Receta añadida al historial exitosamente");
+  /// Agregar a favoritos
+  Future<void> agregarAFavoritos() async {
+    final userRef = FirebaseFirestore.instance
+        .collection('usuarios')
+        .doc(widget.userId);
+
+    await FirebaseFirestore.instance.runTransaction((transaction) async {
+      final snapshot = await transaction.get(userRef);
+      if (!snapshot.exists) return;
+
+      List favoritos = snapshot.data()?['favoritos'] ?? [];
+
+      if (!favoritos.contains(widget.idReceta)) {
+        favoritos.add(widget.idReceta);
+      }
+
+      transaction.update(userRef, {'favoritos': favoritos});
+    });
+
+    print("✔ Receta agregada a favoritos");
   }
 
   @override
@@ -117,7 +169,7 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          // TÍTULO + RATING
+                          /// TÍTULO + RATING
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
@@ -170,36 +222,7 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
 
                           const SizedBox(height: 24),
 
-                          // INFO CARDS
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              _buildInfoCard(
-                                icon: Icons.access_time,
-                                value: widget.time.split(' ')[0],
-                                label: 'mins',
-                              ),
-                              _buildInfoCard(
-                                icon: Icons.people_outline,
-                                value: '03',
-                                label: 'Servings',
-                              ),
-                              _buildInfoCard(
-                                icon: Icons.local_fire_department_outlined,
-                                value: '103',
-                                label: 'Cal',
-                              ),
-                              _buildInfoCard(
-                                icon: Icons.layers_outlined,
-                                value: 'Easy',
-                                label: '',
-                              ),
-                            ],
-                          ),
-
-                          const SizedBox(height: 32),
-
-                          // INGREDIENTES
+                          /// INGREDIENTES
                           const Text(
                             'Ingredients',
                             style: TextStyle(
@@ -208,6 +231,7 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
                             ),
                           ),
                           const SizedBox(height: 16),
+
                           Column(
                             children: widget.ingredientes
                                 .map((e) => _buildIngredient(e))
@@ -225,18 +249,13 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
                           ),
                           const SizedBox(height: 16),
 
-                          _buildDirection(
-                            1,
-                            'In a large mixing bowl, whisk together the flour and eggs...',
+                          Column(
+                            children: List.generate(
+                              widget.pasos.length,
+                              (i) => _buildDirection(i + 1, widget.pasos[i]),
+                            ),
                           ),
-                          _buildDirection(
-                            2,
-                            'Add the salt and butter; beat until smooth...',
-                          ),
-                          _buildDirection(
-                            3,
-                            'Pour or scoop the batter onto the griddle...',
-                          ),
+
                           const SizedBox(height: 100),
                         ],
                       ),
@@ -257,12 +276,21 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
             ),
           ),
 
-          // FAVORITO
+          // BOTÓN FAVORITO
+          // BOTÓN FAVORITO
           Positioned(
             top: 50,
             right: 20,
             child: GestureDetector(
-              onTap: () => setState(() => isFavorite = !isFavorite),
+              onTap: () async {
+                setState(() => isFavorite = !isFavorite);
+
+                if (isFavorite) {
+                  await agregarAFavoritos();
+                } else {
+                  await quitarDeFavoritos();
+                }
+              },
               child: _circleButton(
                 isFavorite ? Icons.bookmark : Icons.bookmark_outline,
                 color: isFavorite ? const Color(0xFFFFC107) : Colors.black,
@@ -274,7 +302,7 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
     );
   }
 
-  /// === Widgets auxiliares ===
+  // ---- Widgets auxiliares ----
 
   Widget _circleButton(IconData icon, {Color color = Colors.black}) {
     return Container(
@@ -291,33 +319,6 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
         ],
       ),
       child: Icon(icon, size: 24, color: color),
-    );
-  }
-
-  Widget _buildInfoCard({
-    required IconData icon,
-    required String value,
-    required String label,
-  }) {
-    return Container(
-      width: 75,
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFFFC107), width: 2),
-      ),
-      child: Column(
-        children: [
-          Icon(icon, size: 28),
-          const SizedBox(height: 8),
-          Text(
-            value,
-            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-          ),
-          if (label.isNotEmpty)
-            Text(label, style: const TextStyle(color: Colors.grey)),
-        ],
-      ),
     );
   }
 
