@@ -68,7 +68,17 @@ class _AdminVerSolicitudesScreenState extends State<AdminVerSolicitudesScreen> {
                 final titulo = data['titulo'] ?? 'Sin título';
                 final descripcion = data['descripcion'] ?? '';
                 final solicitadoPor = data['solicitadoPor'] ?? 'Desconocido';
-                final estado = data['estado'] ?? 'Pendiente';
+                final estadoBool = data['estado'];
+
+                String estadoTexto;
+
+                if (estadoBool == true) {
+                  estadoTexto = 'Aprobada';
+                } else if (estadoBool == false) {
+                  estadoTexto = 'Rechazada';
+                } else {
+                  estadoTexto = 'Pendiente';
+                }
                 final respuesta = data['respuesta'] ?? '';
 
                 final fecha = data['fechaCreacion'] != null
@@ -114,7 +124,7 @@ class _AdminVerSolicitudesScreenState extends State<AdminVerSolicitudesScreen> {
                           style: _itemTextStyle(),
                         ),
                         Text(
-                          "Estado: $estado",
+                          'Estado: $estadoTexto',
                           style: _itemTextStyle(color: Colors.orange),
                         ),
                         if (respuesta.isNotEmpty)
@@ -134,25 +144,38 @@ class _AdminVerSolicitudesScreenState extends State<AdminVerSolicitudesScreen> {
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            _styledButton(
-                              text: "Aceptar",
-                              color: const Color(0xFFFFC107),
-                              textColor: Colors.black,
+                            ElevatedButton(
                               onPressed: () => _actualizarSolicitud(
                                 docId,
-                                'aceptada',
+
+                                true,
+
                                 '¡Solicitud aceptada!',
                               ),
+
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.green,
+                              ),
+
+                              child: const Text('Aceptar'),
                             ),
-                            _styledButton(
-                              text: "Rechazar",
-                              color: Colors.red.shade300,
-                              textColor: Colors.white,
+
+                            const SizedBox(width: 10),
+
+                            ElevatedButton(
                               onPressed: () => _actualizarSolicitud(
                                 docId,
-                                'rechazada',
+
+                                false,
+
                                 'Lo sentimos, rechazada',
                               ),
+
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.red,
+                              ),
+
+                              child: const Text('Rechazar'),
                             ),
                           ],
                         ),
@@ -204,18 +227,25 @@ class _AdminVerSolicitudesScreenState extends State<AdminVerSolicitudesScreen> {
   // ==============================
   // 🔹 Función ya existente (sin cambios)
   // ==============================
+
   void _actualizarSolicitud(
     String docId,
-    String nuevoEstado,
+
+    bool nuevoEstado,
+
     String nuevaRespuesta,
   ) {
     solicitudesRef
         .doc(docId)
-        .update({'estado': nuevoEstado, 'respuesta': nuevaRespuesta})
+        .update({
+          'estado': nuevoEstado, // <-- ahora es BOOLEANO
+
+          'respuesta': nuevaRespuesta,
+        })
         .then((_) {
           ScaffoldMessenger.of(
             context,
-          ).showSnackBar(SnackBar(content: Text('Solicitud $nuevoEstado')));
+          ).showSnackBar(SnackBar(content: Text('Solicitud actualizada')));
         })
         .catchError((error) {
           ScaffoldMessenger.of(context).showSnackBar(
