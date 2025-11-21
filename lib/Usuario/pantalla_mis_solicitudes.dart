@@ -61,7 +61,7 @@ class PantallaMisSolicitudes extends StatelessWidget {
               final titulo = data["titulo"] ?? "Sin título";
               final imagen = data["imagen"] ?? "";
               final fecha = _formatTimestamp(data["fechaCreacion"]);
-              final estado = data["estado"] ?? false; // true = aprobado
+              final estado = data["estado"] ?? false;
 
               return Card(
                 elevation: 3,

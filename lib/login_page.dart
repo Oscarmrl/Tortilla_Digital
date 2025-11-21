@@ -132,11 +132,9 @@ class _LoginPageState extends State<LoginPage> {
     final nombre = userDoc.data()?['nombre'] ?? 'Usuario';
 
     if (rol == 'Admin') {
-      Get.offAll(() => const AdminHomeScreen()); // 🔥 CAMBIADO
+      Get.offAll(() => const AdminHomeScreen());
     } else {
-      Get.offAll(
-        () => PantallaInicio(nombreUsuario: nombre, userId: uid),
-      ); // 🔥 CAMBIADO
+      Get.offAll(() => PantallaInicio(nombreUsuario: nombre, userId: uid));
     }
   }
 
@@ -177,7 +175,7 @@ class _LoginPageState extends State<LoginPage> {
   }
 
   // -------------------------------------------------------------
-  // 🔥 LOGIN CON EMAIL Y CONTRASEÑA - CAMBIADO A Get.offAll()
+  // 🔥 LOGIN CON EMAIL Y CONTRASEÑA
   // -------------------------------------------------------------
   Future<void> _login() async {
     final email = _emailController.text.trim();
@@ -221,10 +219,9 @@ class _LoginPageState extends State<LoginPage> {
         final rol = data['rol'] ?? '';
 
         if (rol == 'Admin') {
-          Get.offAll(() => const AdminHomeScreen()); // 🔥 CAMBIADO
+          Get.offAll(() => const AdminHomeScreen());
         } else {
           Get.offAll(
-            // 🔥 CAMBIADO
             () => PantallaInicio(
               userId: uid,
               nombreUsuario: data['nombre'] ?? 'Usuario',
@@ -238,10 +235,9 @@ class _LoginPageState extends State<LoginPage> {
       final rol = data['rol'] ?? '';
 
       if (rol == 'Admin') {
-        Get.offAll(() => const AdminHomeScreen()); // 🔥 CAMBIADO
+        Get.offAll(() => const AdminHomeScreen());
       } else {
         Get.offAll(
-          // 🔥 CAMBIADO
           () => PantallaInicio(
             userId: uid,
             nombreUsuario: data['nombre'] ?? 'Usuario',
@@ -411,7 +407,6 @@ class _LoginPageState extends State<LoginPage> {
 
                 const SizedBox(height: 16),
 
-                // Recuérdame y olvidaste contraseña
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
@@ -444,9 +439,7 @@ class _LoginPageState extends State<LoginPage> {
                       ],
                     ),
                     TextButton(
-                      onPressed: () {
-                        // Acción para recuperar contraseña
-                      },
+                      onPressed: () {},
                       child: const Text(
                         '¿Olvidaste tu contraseña?',
                         style: TextStyle(
@@ -461,7 +454,6 @@ class _LoginPageState extends State<LoginPage> {
 
                 const SizedBox(height: 24),
 
-                // Botón de iniciar sesión
                 SizedBox(
                   width: double.infinity,
                   height: 56,
@@ -497,7 +489,6 @@ class _LoginPageState extends State<LoginPage> {
 
                 const SizedBox(height: 32),
 
-                // Divider con "O continuar con"
                 Row(
                   children: [
                     Expanded(child: Divider(color: Colors.grey[300])),
@@ -514,24 +505,27 @@ class _LoginPageState extends State<LoginPage> {
 
                 const SizedBox(height: 24),
 
-                // Botones de redes sociales
                 Row(
                   children: [
                     Expanded(
                       child: _buildSocialButton(
-                        icon: Icons.g_translate,
                         label: 'Google',
                         onTap: _loginWithGoogle,
                         color: Colors.red,
+                        image: Image.asset(
+                          'assets/google.png',
+                          width: 24,
+                          height: 24,
+                        ),
                       ),
                     ),
                     const SizedBox(width: 16),
                     Expanded(
                       child: _buildSocialButton(
-                        icon: Icons.facebook,
                         label: 'Facebook',
                         onTap: _loginWithFacebook,
                         color: Colors.blue[800]!,
+                        icon: Icons.facebook,
                       ),
                     ),
                   ],
@@ -539,7 +533,6 @@ class _LoginPageState extends State<LoginPage> {
 
                 const SizedBox(height: 32),
 
-                // Registrarse
                 Center(
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
@@ -572,8 +565,12 @@ class _LoginPageState extends State<LoginPage> {
     );
   }
 
+  // -------------------------------------------------------------
+  // 🔥 BOTÓN SOCIAL COMPATIBLE CON IMAGEN PNG
+  // -------------------------------------------------------------
   Widget _buildSocialButton({
-    required IconData icon,
+    IconData? icon,
+    Image? image,
     required String label,
     required VoidCallback onTap,
     required Color color,
@@ -591,7 +588,8 @@ class _LoginPageState extends State<LoginPage> {
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(icon, color: color, size: 24),
+            if (image != null) image,
+            if (icon != null) Icon(icon, color: color, size: 24),
             const SizedBox(width: 8),
             Text(
               label,

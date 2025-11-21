@@ -40,6 +40,7 @@ flutter:
     - assets/tortilla.png
     - assets/usuarios.json
     - assets/avatar.png
+    - assets/google.png
 
 flutter_icons:
   android: true
