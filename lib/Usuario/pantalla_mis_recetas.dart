@@ -19,6 +19,12 @@ class _PantallaMisRecetasState extends State<PantallaMisRecetas> {
   final TextEditingController _ingredientsController = TextEditingController();
   final TextEditingController _stepsController = TextEditingController();
 
+  //TIEMPO
+  final TextEditingController _tiempoController = TextEditingController();
+  String _unidadTiempo = "Minutos";
+
+  List<String> unidadesTiempo = ["Minutos", "Horas"];
+
   String _selectedCategory = '';
   File? _imageFile;
 
@@ -69,7 +75,7 @@ class _PantallaMisRecetasState extends State<PantallaMisRecetas> {
       await FirebaseFirestore.instance.collection("SolicitudReceta").add({
         "categoria": _selectedCategory,
         "descripcion": _descriptionController.text.trim(),
-        "estado": false,
+        "esAprovada": false,
         "fechaCreacion": Timestamp.now(),
         "imagen": imageUrl,
         "ingredientes": ingredientesList,
@@ -77,12 +83,16 @@ class _PantallaMisRecetasState extends State<PantallaMisRecetas> {
         "respuesta": "",
         "solicitadaPor": user.uid,
         "titulo": _titleController.text.trim(),
+        "tiempo":
+            "${_tiempoController.text.trim()} ${_unidadTiempo.toLowerCase()}",
       });
 
       _titleController.clear();
       _descriptionController.clear();
       _ingredientsController.clear();
       _stepsController.clear();
+      _tiempoController.clear();
+      _unidadTiempo = unidadesTiempo.first;
 
       setState(() {
         _imageFile = null;
@@ -167,6 +177,61 @@ class _PantallaMisRecetasState extends State<PantallaMisRecetas> {
                     'Descripción',
                     _descriptionController,
                     maxLines: 3,
+                  ),
+                  const SizedBox(height: 15),
+                  Row(
+                    children: [
+                      Expanded(
+                        flex: 2,
+                        child: TextFormField(
+                          controller: _tiempoController,
+                          keyboardType: TextInputType.number,
+                          decoration: InputDecoration(
+                            labelText: "Tiempo",
+                            filled: true,
+                            fillColor: Colors.white,
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(14),
+                            ),
+                          ),
+                          validator: (value) {
+                            if (value == null || value.isEmpty) {
+                              return "Ingresa el tiempo";
+                            }
+                            if (int.tryParse(value) == null) {
+                              return "Solo números";
+                            }
+                            return null;
+                          },
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        flex: 2,
+                        child: DropdownButtonFormField<String>(
+                          value: _unidadTiempo,
+                          items: unidadesTiempo
+                              .map(
+                                (u) =>
+                                    DropdownMenuItem(value: u, child: Text(u)),
+                              )
+                              .toList(),
+                          decoration: InputDecoration(
+                            labelText: "Unidad",
+                            filled: true,
+                            fillColor: Colors.white,
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(14),
+                            ),
+                          ),
+                          onChanged: (value) {
+                            setState(() {
+                              _unidadTiempo = value!;
+                            });
+                          },
+                        ),
+                      ),
+                    ],
                   ),
 
                   const SizedBox(height: 15),
@@ -371,5 +436,6 @@ class _PantallaMisRecetasState extends State<PantallaMisRecetas> {
     _ingredientsController.dispose();
     _stepsController.dispose();
     super.dispose();
+    _tiempoController.dispose();
   }
 }
