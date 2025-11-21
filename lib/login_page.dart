@@ -22,6 +22,7 @@ class _LoginPageState extends State<LoginPage> {
   final _passwordController = TextEditingController();
   bool _loading = false;
   bool _rememberMe = false;
+  bool _obscurePassword = true;
 
   @override
   void initState() {
@@ -31,12 +32,12 @@ class _LoginPageState extends State<LoginPage> {
   }
 
   // -------------------------------------------------------------
-  // 🔥 LOGIN CON GOOGLE (Ahora crea el documento en Firestore)
+  // 🔥 LOGIN CON GOOGLE
   // -------------------------------------------------------------
   Future<void> _loginWithGoogle() async {
     try {
       final googleUser = await GoogleSignIn().signIn();
-      if (googleUser == null) return; // Usuario canceló
+      if (googleUser == null) return;
 
       final googleAuth = await googleUser.authentication;
 
@@ -51,18 +52,16 @@ class _LoginPageState extends State<LoginPage> {
 
       final uid = userCredential.user!.uid;
 
-      // 🔥 VERIFICAR SI EL USUARIO YA EXISTE EN FIRESTORE
       final userDoc = await FirebaseFirestore.instance
           .collection('usuarios')
           .doc(uid)
           .get();
 
       if (!userDoc.exists) {
-        // 🔥 CREAR DOCUMENTO SI ES LA PRIMERA VEZ
         await FirebaseFirestore.instance.collection('usuarios').doc(uid).set({
           'nombre': userCredential.user!.displayName ?? 'Usuario',
           'correo': userCredential.user!.email,
-          'rol': 'Cliente', // Rol por defecto
+          'rol': 'Cliente',
           'fechaRegistro': FieldValue.serverTimestamp(),
           'metodRegistro': 'Google',
         });
@@ -75,7 +74,7 @@ class _LoginPageState extends State<LoginPage> {
   }
 
   // -------------------------------------------------------------
-  // 🔥 LOGIN CON FACEBOOK (Ahora crea el documento en Firestore)
+  // 🔥 LOGIN CON FACEBOOK
   // -------------------------------------------------------------
   Future<void> _loginWithFacebook() async {
     try {
@@ -91,14 +90,12 @@ class _LoginPageState extends State<LoginPage> {
 
         final uid = userCredential.user!.uid;
 
-        // 🔥 VERIFICAR SI EL USUARIO YA EXISTE EN FIRESTORE
         final userDoc = await FirebaseFirestore.instance
             .collection('usuarios')
             .doc(uid)
             .get();
 
         if (!userDoc.exists) {
-          // 🔥 CREAR DOCUMENTO SI ES LA PRIMERA VEZ
           await FirebaseFirestore.instance.collection('usuarios').doc(uid).set({
             'nombre': userCredential.user!.displayName ?? 'Usuario',
             'correo': userCredential.user!.email,
@@ -118,7 +115,7 @@ class _LoginPageState extends State<LoginPage> {
   }
 
   // -------------------------------------------------------------
-  // 🔥 REDIRIGIR SEGÚN ROL
+  // 🔥 REDIRIGIR SEGÚN ROL - CAMBIADO A Get.offAll()
   // -------------------------------------------------------------
   Future<void> _redirectUser(String uid) async {
     final userDoc = await FirebaseFirestore.instance
@@ -135,9 +132,11 @@ class _LoginPageState extends State<LoginPage> {
     final nombre = userDoc.data()?['nombre'] ?? 'Usuario';
 
     if (rol == 'Admin') {
-      Get.off(() => const AdminHomeScreen());
+      Get.offAll(() => const AdminHomeScreen()); // 🔥 CAMBIADO
     } else {
-      Get.off(() => PantallaInicio(nombreUsuario: nombre, userId: uid));
+      Get.offAll(
+        () => PantallaInicio(nombreUsuario: nombre, userId: uid),
+      ); // 🔥 CAMBIADO
     }
   }
 
@@ -178,7 +177,7 @@ class _LoginPageState extends State<LoginPage> {
   }
 
   // -------------------------------------------------------------
-  // 🔥 LOGIN CON EMAIL Y CONTRASEÑA
+  // 🔥 LOGIN CON EMAIL Y CONTRASEÑA - CAMBIADO A Get.offAll()
   // -------------------------------------------------------------
   Future<void> _login() async {
     final email = _emailController.text.trim();
@@ -197,7 +196,6 @@ class _LoginPageState extends State<LoginPage> {
         password: password,
       );
 
-      // 🔥 Guardar o borrar datos
       await _handleRememberMe(email, password);
 
       final uid = userCredential.user!.uid;
@@ -208,7 +206,6 @@ class _LoginPageState extends State<LoginPage> {
       final userDoc = await userDocRef.get();
 
       if (!userDoc.exists) {
-        // Backup: buscar por correo
         final query = await FirebaseFirestore.instance
             .collection('usuarios')
             .where('correo', isEqualTo: email)
@@ -224,9 +221,10 @@ class _LoginPageState extends State<LoginPage> {
         final rol = data['rol'] ?? '';
 
         if (rol == 'Admin') {
-          Get.off(() => const AdminHomeScreen());
+          Get.offAll(() => const AdminHomeScreen()); // 🔥 CAMBIADO
         } else {
-          Get.off(
+          Get.offAll(
+            // 🔥 CAMBIADO
             () => PantallaInicio(
               userId: uid,
               nombreUsuario: data['nombre'] ?? 'Usuario',
@@ -236,14 +234,14 @@ class _LoginPageState extends State<LoginPage> {
         return;
       }
 
-      // Documento principal existe
       final data = userDoc.data()!;
       final rol = data['rol'] ?? '';
 
       if (rol == 'Admin') {
-        Get.off(() => const AdminHomeScreen());
+        Get.offAll(() => const AdminHomeScreen()); // 🔥 CAMBIADO
       } else {
-        Get.off(
+        Get.offAll(
+          // 🔥 CAMBIADO
           () => PantallaInicio(
             userId: uid,
             nombreUsuario: data['nombre'] ?? 'Usuario',
@@ -280,185 +278,283 @@ class _LoginPageState extends State<LoginPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFB7DB88),
-      body: Center(
+      backgroundColor: Colors.white,
+      body: SafeArea(
         child: SingleChildScrollView(
-          child: Container(
-            width: 320,
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(24),
-              gradient: const LinearGradient(
-                colors: [Color(0xFFFFD966), Color(0xFF9AC17D)],
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-              ),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.2),
-                  blurRadius: 10,
-                  offset: const Offset(0, 5),
-                ),
-              ],
-            ),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 24.0),
             child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const SizedBox(height: 30),
-                const CircleAvatar(
-                  radius: 40,
-                  backgroundColor: Colors.white,
-                  backgroundImage: AssetImage('assets/tortilla.png'),
-                ),
-                const SizedBox(height: 12),
-                const Text(
-                  '¡Bienvenidos!',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 22,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const SizedBox(height: 20),
-                Container(
-                  decoration: const BoxDecoration(
-                    color: Color(0xFF3C814E),
-                    borderRadius: BorderRadius.vertical(
-                      bottom: Radius.circular(24),
-                    ),
-                  ),
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 24,
-                    vertical: 20,
-                  ),
+                const SizedBox(height: 40),
+
+                // Logo y título
+                Center(
                   child: Column(
                     children: [
-                      TextField(
-                        controller: _emailController,
-                        keyboardType: TextInputType.emailAddress,
-                        decoration: InputDecoration(
-                          hintText: 'Correo',
-                          prefixIcon: const Icon(Icons.email_outlined),
-                          filled: true,
-                          fillColor: Colors.white,
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(24),
-                            borderSide: BorderSide.none,
+                      Container(
+                        width: 80,
+                        height: 80,
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFFFC107),
+                          borderRadius: BorderRadius.circular(20),
+                          boxShadow: [
+                            BoxShadow(
+                              color: const Color(0xFFFFC107).withOpacity(0.3),
+                              blurRadius: 20,
+                              offset: const Offset(0, 10),
+                            ),
+                          ],
+                        ),
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(20),
+                          child: Image.asset(
+                            'assets/tortilla.png',
+                            fit: BoxFit.cover,
                           ),
                         ),
                       ),
-                      const SizedBox(height: 12),
-                      TextField(
-                        controller: _passwordController,
-                        obscureText: true,
-                        decoration: InputDecoration(
-                          hintText: 'Contraseña',
-                          prefixIcon: const Icon(Icons.lock_outline),
-                          filled: true,
-                          fillColor: Colors.white,
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(24),
-                            borderSide: BorderSide.none,
-                          ),
+                      const SizedBox(height: 24),
+                      const Text(
+                        '¡Bienvenido de vuelta!',
+                        style: TextStyle(
+                          fontSize: 28,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.black,
                         ),
                       ),
                       const SizedBox(height: 8),
-                      Row(
-                        children: [
-                          Checkbox(
+                      Text(
+                        'Inicia sesión para continuar',
+                        style: TextStyle(fontSize: 16, color: Colors.grey[600]),
+                      ),
+                    ],
+                  ),
+                ),
+
+                const SizedBox(height: 40),
+
+                // Campo de correo
+                TextField(
+                  controller: _emailController,
+                  keyboardType: TextInputType.emailAddress,
+                  decoration: InputDecoration(
+                    hintText: 'Correo electrónico',
+                    prefixIcon: const Icon(
+                      Icons.email_outlined,
+                      color: Colors.grey,
+                    ),
+                    filled: true,
+                    fillColor: Colors.grey[100],
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(16),
+                      borderSide: BorderSide.none,
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(16),
+                      borderSide: BorderSide.none,
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(16),
+                      borderSide: const BorderSide(
+                        color: Color(0xFFFFC107),
+                        width: 2,
+                      ),
+                    ),
+                  ),
+                ),
+
+                const SizedBox(height: 16),
+
+                // Campo de contraseña
+                TextField(
+                  controller: _passwordController,
+                  obscureText: _obscurePassword,
+                  decoration: InputDecoration(
+                    hintText: 'Contraseña',
+                    prefixIcon: const Icon(
+                      Icons.lock_outline,
+                      color: Colors.grey,
+                    ),
+                    suffixIcon: IconButton(
+                      icon: Icon(
+                        _obscurePassword
+                            ? Icons.visibility_outlined
+                            : Icons.visibility_off_outlined,
+                        color: Colors.grey,
+                      ),
+                      onPressed: () {
+                        setState(() {
+                          _obscurePassword = !_obscurePassword;
+                        });
+                      },
+                    ),
+                    filled: true,
+                    fillColor: Colors.grey[100],
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(16),
+                      borderSide: BorderSide.none,
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(16),
+                      borderSide: BorderSide.none,
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(16),
+                      borderSide: const BorderSide(
+                        color: Color(0xFFFFC107),
+                        width: 2,
+                      ),
+                    ),
+                  ),
+                ),
+
+                const SizedBox(height: 16),
+
+                // Recuérdame y olvidaste contraseña
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Row(
+                      children: [
+                        SizedBox(
+                          width: 24,
+                          height: 24,
+                          child: Checkbox(
                             value: _rememberMe,
                             onChanged: (value) {
                               setState(() {
                                 _rememberMe = value!;
                               });
                             },
-                            activeColor: const Color(0xFFFFD966),
-                          ),
-                          const Text(
-                            'Recuérdame',
-                            style: TextStyle(color: Colors.white),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 8),
-                      SizedBox(
-                        width: double.infinity,
-                        child: ElevatedButton(
-                          onPressed: _loading ? null : _login,
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFF2F6E41),
+                            activeColor: const Color(0xFFFFC107),
                             shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(20),
+                              borderRadius: BorderRadius.circular(4),
                             ),
-                            padding: const EdgeInsets.symmetric(vertical: 12),
-                          ),
-                          child: _loading
-                              ? const CircularProgressIndicator(
-                                  color: Colors.white,
-                                )
-                              : const Text(
-                                  'Iniciar Sesión',
-                                  style: TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                        ),
-                      ),
-                      const SizedBox(height: 15),
-                      const Text(
-                        "O continuar con",
-                        style: TextStyle(color: Colors.white),
-                      ),
-                      const SizedBox(height: 10),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          InkWell(
-                            onTap: _loginWithGoogle,
-                            child: CircleAvatar(
-                              radius: 22,
-                              backgroundColor: Colors.white,
-                              child: Icon(
-                                Icons.g_translate,
-                                color: Colors.red,
-                                size: 26,
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 20),
-                          InkWell(
-                            onTap: _loginWithFacebook,
-                            child: CircleAvatar(
-                              radius: 22,
-                              backgroundColor: Colors.white,
-                              child: Icon(
-                                Icons.facebook,
-                                color: Colors.blue[800],
-                                size: 26,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 20),
-                      const Text(
-                        '¿No tienes cuenta?',
-                        style: TextStyle(color: Colors.white),
-                      ),
-                      const SizedBox(height: 6),
-                      OutlinedButton(
-                        onPressed: () => Get.to(() => const RegisterPage()),
-                        style: OutlinedButton.styleFrom(
-                          side: const BorderSide(color: Colors.white),
-                          backgroundColor: const Color(0xFF89B76F),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(20),
                           ),
                         ),
-                        child: const Text(
-                          'Registrarse',
+                        const SizedBox(width: 8),
+                        Text(
+                          'Recuérdame',
                           style: TextStyle(
-                            color: Colors.white,
+                            color: Colors.grey[700],
+                            fontSize: 14,
+                          ),
+                        ),
+                      ],
+                    ),
+                    TextButton(
+                      onPressed: () {
+                        // Acción para recuperar contraseña
+                      },
+                      child: const Text(
+                        '¿Olvidaste tu contraseña?',
+                        style: TextStyle(
+                          color: Color(0xFFFFC107),
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+
+                const SizedBox(height: 24),
+
+                // Botón de iniciar sesión
+                SizedBox(
+                  width: double.infinity,
+                  height: 56,
+                  child: ElevatedButton(
+                    onPressed: _loading ? null : _login,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFFFFC107),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      elevation: 0,
+                      shadowColor: const Color(0xFFFFC107).withOpacity(0.3),
+                    ),
+                    child: _loading
+                        ? const SizedBox(
+                            width: 24,
+                            height: 24,
+                            child: CircularProgressIndicator(
+                              color: Colors.black,
+                              strokeWidth: 2,
+                            ),
+                          )
+                        : const Text(
+                            'Iniciar Sesión',
+                            style: TextStyle(
+                              color: Colors.black,
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                  ),
+                ),
+
+                const SizedBox(height: 32),
+
+                // Divider con "O continuar con"
+                Row(
+                  children: [
+                    Expanded(child: Divider(color: Colors.grey[300])),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      child: Text(
+                        'O continuar con',
+                        style: TextStyle(color: Colors.grey[600], fontSize: 14),
+                      ),
+                    ),
+                    Expanded(child: Divider(color: Colors.grey[300])),
+                  ],
+                ),
+
+                const SizedBox(height: 24),
+
+                // Botones de redes sociales
+                Row(
+                  children: [
+                    Expanded(
+                      child: _buildSocialButton(
+                        icon: Icons.g_translate,
+                        label: 'Google',
+                        onTap: _loginWithGoogle,
+                        color: Colors.red,
+                      ),
+                    ),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: _buildSocialButton(
+                        icon: Icons.facebook,
+                        label: 'Facebook',
+                        onTap: _loginWithFacebook,
+                        color: Colors.blue[800]!,
+                      ),
+                    ),
+                  ],
+                ),
+
+                const SizedBox(height: 32),
+
+                // Registrarse
+                Center(
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        '¿No tienes cuenta? ',
+                        style: TextStyle(color: Colors.grey[600], fontSize: 14),
+                      ),
+                      GestureDetector(
+                        onTap: () => Get.to(() => const RegisterPage()),
+                        child: const Text(
+                          'Regístrate',
+                          style: TextStyle(
+                            color: Color(0xFFFFC107),
+                            fontSize: 14,
                             fontWeight: FontWeight.bold,
                           ),
                         ),
@@ -466,9 +562,46 @@ class _LoginPageState extends State<LoginPage> {
                     ],
                   ),
                 ),
+
+                const SizedBox(height: 24),
               ],
             ),
           ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSocialButton({
+    required IconData icon,
+    required String label,
+    required VoidCallback onTap,
+    required Color color,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(16),
+      child: Container(
+        height: 56,
+        decoration: BoxDecoration(
+          color: Colors.grey[100],
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: Colors.grey[300]!),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(icon, color: color, size: 24),
+            const SizedBox(width: 8),
+            Text(
+              label,
+              style: const TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+                color: Colors.black87,
+              ),
+            ),
+          ],
         ),
       ),
     );

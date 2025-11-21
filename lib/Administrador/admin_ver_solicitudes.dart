@@ -18,28 +18,41 @@ class _AdminVerSolicitudesScreenState extends State<AdminVerSolicitudesScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFB7DB88),
+      backgroundColor: Colors.white,
       appBar: AppBar(
+        backgroundColor: Colors.white,
+        elevation: 0,
         title: const Text(
           'Solicitudes de Recetas',
-          style: TextStyle(fontWeight: FontWeight.bold),
+          style: TextStyle(
+            fontWeight: FontWeight.bold,
+            fontSize: 22,
+            color: Colors.black,
+          ),
         ),
-        backgroundColor: const Color(0xFF3C814E),
+        centerTitle: true,
       ),
+
       body: Padding(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(20),
         child: StreamBuilder<QuerySnapshot>(
           stream: solicitudesRef.snapshots(),
           builder: (context, snapshot) {
             if (snapshot.connectionState == ConnectionState.waiting) {
-              return const Center(child: CircularProgressIndicator());
+              return const Center(
+                child: CircularProgressIndicator(color: Color(0xFFFFC107)),
+              );
             }
 
             if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
               return const Center(
                 child: Text(
                   'No hay solicitudes',
-                  style: TextStyle(fontSize: 18, color: Colors.white),
+                  style: TextStyle(
+                    fontSize: 18,
+                    color: Colors.grey,
+                    fontWeight: FontWeight.w500,
+                  ),
                 ),
               );
             }
@@ -51,73 +64,117 @@ class _AdminVerSolicitudesScreenState extends State<AdminVerSolicitudesScreen> {
               itemBuilder: (context, index) {
                 final data = solicitudes[index].data() as Map<String, dynamic>;
                 final docId = solicitudes[index].id;
+
                 final titulo = data['titulo'] ?? 'Sin título';
                 final descripcion = data['descripcion'] ?? '';
                 final solicitadoPor = data['solicitadoPor'] ?? 'Desconocido';
-                final estado = data['estado'] ?? 'Pendiente';
+                final estadoBool = data['estado'];
+
+                String estadoTexto;
+
+                if (estadoBool == true) {
+                  estadoTexto = 'Aprobada';
+                } else if (estadoBool == false) {
+                  estadoTexto = 'Rechazada';
+                } else {
+                  estadoTexto = 'Pendiente';
+                }
                 final respuesta = data['respuesta'] ?? '';
+
                 final fecha = data['fechaCreacion'] != null
                     ? (data['fechaCreacion'] as Timestamp).toDate()
                     : null;
 
-                return Card(
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(20),
+                return Container(
+                  margin: const EdgeInsets.only(bottom: 16),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(18),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.05),
+                        blurRadius: 10,
+                        offset: const Offset(0, 5),
+                      ),
+                    ],
                   ),
-                  elevation: 3,
-                  margin: const EdgeInsets.symmetric(vertical: 8),
                   child: Padding(
-                    padding: const EdgeInsets.all(8.0),
+                    padding: const EdgeInsets.all(18),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        ListTile(
-                          title: Text(
-                            titulo,
-                            style: const TextStyle(fontWeight: FontWeight.bold),
+                        // Título
+                        Text(
+                          titulo,
+                          style: const TextStyle(
+                            fontSize: 17,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.black87,
                           ),
-                          subtitle: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              const SizedBox(height: 4),
-                              Text('Descripción: $descripcion'),
-                              Text('Solicitado por: $solicitadoPor'),
-                              Text('Estado: $estado'),
-                              if (respuesta.isNotEmpty)
-                                Text('Respuesta: $respuesta'),
-                              if (fecha != null)
-                                Text(
-                                  'Fecha: ${DateFormat('dd/MM/yyyy – HH:mm').format(fecha)}',
-                                ),
-                            ],
-                          ),
-                          isThreeLine: true,
                         ),
-                        const SizedBox(height: 8),
+                        const SizedBox(height: 10),
+
+                        // Información
+                        Text(
+                          "Descripción: $descripcion",
+                          style: _itemTextStyle(),
+                        ),
+                        Text(
+                          "Solicitado por: $solicitadoPor",
+                          style: _itemTextStyle(),
+                        ),
+                        Text(
+                          'Estado: $estadoTexto',
+                          style: _itemTextStyle(color: Colors.orange),
+                        ),
+                        if (respuesta.isNotEmpty)
+                          Text(
+                            "Respuesta: $respuesta",
+                            style: _itemTextStyle(color: Colors.green),
+                          ),
+                        if (fecha != null)
+                          Text(
+                            "Fecha: ${DateFormat('dd/MM/yyyy – HH:mm').format(fecha)}",
+                            style: _itemTextStyle(),
+                          ),
+
+                        const SizedBox(height: 16),
+
+                        // Botones
                         Row(
-                          mainAxisAlignment: MainAxisAlignment.end,
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
                             ElevatedButton(
                               onPressed: () => _actualizarSolicitud(
                                 docId,
-                                'aceptada',
+
+                                true,
+
                                 '¡Solicitud aceptada!',
                               ),
+
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: Colors.green,
                               ),
+
                               child: const Text('Aceptar'),
                             ),
+
                             const SizedBox(width: 10),
+
                             ElevatedButton(
                               onPressed: () => _actualizarSolicitud(
                                 docId,
-                                'rechazada',
+
+                                false,
+
                                 'Lo sentimos, rechazada',
                               ),
+
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: Colors.red,
                               ),
+
                               child: const Text('Rechazar'),
                             ),
                           ],
@@ -134,18 +191,61 @@ class _AdminVerSolicitudesScreenState extends State<AdminVerSolicitudesScreen> {
     );
   }
 
+  // ==============================
+  // 🔹 Helpers visuales
+  // ==============================
+  TextStyle _itemTextStyle({Color color = Colors.black54}) {
+    return TextStyle(fontSize: 14, color: color, height: 1.3);
+  }
+
+  Widget _styledButton({
+    required String text,
+    required Color color,
+    required Color textColor,
+    required VoidCallback onPressed,
+  }) {
+    return Expanded(
+      child: ElevatedButton(
+        onPressed: onPressed,
+        style: ElevatedButton.styleFrom(
+          backgroundColor: color,
+          foregroundColor: textColor,
+          padding: const EdgeInsets.symmetric(vertical: 12),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(14),
+          ),
+          elevation: 1.5,
+        ),
+        child: Text(
+          text,
+          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+        ),
+      ),
+    );
+  }
+
+  // ==============================
+  // 🔹 Función ya existente (sin cambios)
+  // ==============================
+
   void _actualizarSolicitud(
     String docId,
-    String nuevoEstado,
+
+    bool nuevoEstado,
+
     String nuevaRespuesta,
   ) {
     solicitudesRef
         .doc(docId)
-        .update({'estado': nuevoEstado, 'respuesta': nuevaRespuesta})
+        .update({
+          'estado': nuevoEstado, // <-- ahora es BOOLEANO
+
+          'respuesta': nuevaRespuesta,
+        })
         .then((_) {
           ScaffoldMessenger.of(
             context,
-          ).showSnackBar(SnackBar(content: Text('Solicitud $nuevoEstado')));
+          ).showSnackBar(SnackBar(content: Text('Solicitud actualizada')));
         })
         .catchError((error) {
           ScaffoldMessenger.of(context).showSnackBar(
