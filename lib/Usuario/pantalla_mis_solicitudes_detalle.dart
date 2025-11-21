@@ -9,9 +9,43 @@ class PantallaMisSolicitudesDetalle extends StatelessWidget {
   Widget build(BuildContext context) {
     final titulo = data["titulo"] ?? "";
     final descripcion = data["descripcion"] ?? "";
-    final ingredientes = data["ingredientes"] ?? "";
-    final pasos = data["pasos"] ?? "";
-    final categorias = data["categoria"] ?? [];
+
+    // ---------- INGREDIENTES ----------
+    final ingredientesRaw = data["ingredientes"];
+    late final String ingredientes;
+
+    if (ingredientesRaw is List) {
+      ingredientes = ingredientesRaw.join("\n");
+    } else if (ingredientesRaw is String) {
+      ingredientes = ingredientesRaw;
+    } else {
+      ingredientes = "";
+    }
+
+    // ---------- PASOS ----------
+    final pasosRaw = data["pasos"];
+    late final String pasos;
+
+    if (pasosRaw is List) {
+      pasos = pasosRaw.join("\n");
+    } else if (pasosRaw is String) {
+      pasos = pasosRaw;
+    } else {
+      pasos = "";
+    }
+
+    // ---------- CATEGORIA ----------
+    final categoriasRaw = data["categoria"];
+    late final List<String> categorias;
+
+    if (categoriasRaw is List) {
+      categorias = categoriasRaw.cast<String>();
+    } else if (categoriasRaw is String) {
+      categorias = [categoriasRaw];
+    } else {
+      categorias = [];
+    }
+
     final imagen = data["imagen"] ?? "";
     final estado = data["estado"] ?? false;
 
@@ -48,7 +82,7 @@ class PantallaMisSolicitudesDetalle extends StatelessWidget {
             ),
             const SizedBox(height: 20),
 
-            // TÍTULO
+            // TITULO
             Text(
               titulo,
               style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
@@ -77,15 +111,15 @@ class PantallaMisSolicitudesDetalle extends StatelessWidget {
 
             const SizedBox(height: 20),
 
-            // CATEGORÍA
-            Text(
+            // CATEGORIA
+            const Text(
               "Categoría:",
-              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
             Text(categorias.join(", "), style: const TextStyle(fontSize: 16)),
             const SizedBox(height: 20),
 
-            // DESCRIPCIÓN
+            // DESCRIPCION
             const Text(
               "Descripción:",
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
@@ -108,13 +142,10 @@ class PantallaMisSolicitudesDetalle extends StatelessWidget {
             ),
             Text(pasos, style: const TextStyle(fontSize: 16)),
             const SizedBox(height: 50),
+
             const Text(
-              "Esta es una version preliminar, si es aprobada el diseño final puede variar.",
-              style: TextStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.normal,
-                color: Colors.grey,
-              ),
+              "Esta es una versión preliminar, si es aprobada el diseño final puede variar.",
+              style: TextStyle(fontSize: 13, color: Colors.grey),
               textAlign: TextAlign.center,
             ),
           ],
