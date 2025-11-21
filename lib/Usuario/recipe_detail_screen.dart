@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'favoritos_screen.dart';
 
 class RecipeDetailScreen extends StatefulWidget {
   final String imagenUrl;
@@ -9,9 +8,9 @@ class RecipeDetailScreen extends StatefulWidget {
   final double rating;
   final String time;
   final List<String> ingredientes;
+  final List<String> pasos; // ✅ Agregado a la clase
   final String idReceta;
   final String userId;
-  final List<String> pasos;
 
   const RecipeDetailScreen({
     super.key,
@@ -21,9 +20,9 @@ class RecipeDetailScreen extends StatefulWidget {
     required this.rating,
     required this.time,
     required this.ingredientes,
+    required this.pasos, // ✅ Ahora es parte de la clase
     required this.idReceta,
     required this.userId,
-    required this.pasos,
   });
 
   @override
@@ -36,45 +35,11 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
   @override
   void initState() {
     super.initState();
+    // Agregar receta visitada al historial
     agregarRecetaAlHistorial();
-    cargarFavorito();
   }
 
-  /// Verifica si la receta ya está en favoritos
-  Future<void> cargarFavorito() async {
-    final userDoc = await FirebaseFirestore.instance
-        .collection('usuarios')
-        .doc(widget.userId)
-        .get();
-
-    List favs = userDoc.data()?['favoritos'] ?? [];
-
-    setState(() {
-      isFavorite = favs.contains(widget.idReceta);
-    });
-  }
-
-  /// Quitar de favoritos
-  Future<void> quitarDeFavoritos() async {
-    final userRef = FirebaseFirestore.instance
-        .collection('usuarios')
-        .doc(widget.userId);
-
-    await FirebaseFirestore.instance.runTransaction((transaction) async {
-      final snapshot = await transaction.get(userRef);
-      if (!snapshot.exists) return;
-
-      List favoritos = snapshot.data()?['favoritos'] ?? [];
-
-      favoritos.remove(widget.idReceta);
-
-      transaction.update(userRef, {'favoritos': favoritos});
-    });
-
-    print("❌ Receta eliminada de favoritos");
-  }
-
-  /// Guarda receta en historial
+  /// Guarda automáticamente la receta visitada en Firestore
   Future<void> agregarRecetaAlHistorial() async {
     final userRef = FirebaseFirestore.instance
         .collection('usuarios')
@@ -83,38 +48,22 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
     await FirebaseFirestore.instance.runTransaction((transaction) async {
       final snapshot = await transaction.get(userRef);
 
-      if (!snapshot.exists) return;
+      if (!snapshot.exists) {
+        print("❌ Usuario no existe.");
+        return;
+      }
 
       List historial = snapshot.data()?['historial'] ?? [];
 
       historial.add({'idReceta': widget.idReceta, 'fecha': Timestamp.now()});
 
+      // Limitar historial a 10
       if (historial.length > 10) historial.removeAt(0);
 
       transaction.update(userRef, {'historial': historial});
     });
-  }
 
-  /// Agregar a favoritos
-  Future<void> agregarAFavoritos() async {
-    final userRef = FirebaseFirestore.instance
-        .collection('usuarios')
-        .doc(widget.userId);
-
-    await FirebaseFirestore.instance.runTransaction((transaction) async {
-      final snapshot = await transaction.get(userRef);
-      if (!snapshot.exists) return;
-
-      List favoritos = snapshot.data()?['favoritos'] ?? [];
-
-      if (!favoritos.contains(widget.idReceta)) {
-        favoritos.add(widget.idReceta);
-      }
-
-      transaction.update(userRef, {'favoritos': favoritos});
-    });
-
-    print("✔ Receta agregada a favoritos");
+    print("✔ Receta añadida al historial exitosamente");
   }
 
   @override
@@ -169,7 +118,7 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          /// TÍTULO + RATING
+                          // TÍTULO + RATING
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
@@ -222,16 +171,39 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
 
                           const SizedBox(height: 24),
 
-                          /// INGREDIENTES
+                          // INFO CARDS
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              _buildInfoCard(
+                                icon: Icons.access_time,
+                                value: widget.time.split(' ')[0],
+                                label: 'mins',
+                              ),
+                              _buildInfoCard(
+                                icon: Icons.local_fire_department_outlined,
+                                value: '103',
+                                label: 'Cal',
+                              ),
+                              _buildInfoCard(
+                                icon: Icons.layers_outlined,
+                                value: 'Easy',
+                                label: 'Dific',
+                              ),
+                            ],
+                          ),
+
+                          const SizedBox(height: 32),
+
+                          // INGREDIENTES
                           const Text(
-                            'Ingredients',
+                            'Ingredientes',
                             style: TextStyle(
                               fontSize: 22,
                               fontWeight: FontWeight.bold,
                             ),
                           ),
                           const SizedBox(height: 16),
-
                           Column(
                             children: widget.ingredientes
                                 .map((e) => _buildIngredient(e))
@@ -240,8 +212,9 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
 
                           const SizedBox(height: 32),
 
+                          // DIRECCIONES / PASOS
                           const Text(
-                            'Directions',
+                            'Pasos',
                             style: TextStyle(
                               fontSize: 22,
                               fontWeight: FontWeight.bold,
@@ -249,12 +222,12 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
                           ),
                           const SizedBox(height: 16),
 
-                          Column(
-                            children: List.generate(
-                              widget.pasos.length,
-                              (i) => _buildDirection(i + 1, widget.pasos[i]),
-                            ),
-                          ),
+                          // ✅ AQUÍ USAMOS LOS PASOS DINÁMICOS
+                          ...widget.pasos.asMap().entries.map((entry) {
+                            int index = entry.key;
+                            String paso = entry.value;
+                            return _buildDirection(index + 1, paso);
+                          }).toList(),
 
                           const SizedBox(height: 100),
                         ],
@@ -276,21 +249,12 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
             ),
           ),
 
-          // BOTÓN FAVORITO
-          // BOTÓN FAVORITO
+          // FAVORITO
           Positioned(
             top: 50,
             right: 20,
             child: GestureDetector(
-              onTap: () async {
-                setState(() => isFavorite = !isFavorite);
-
-                if (isFavorite) {
-                  await agregarAFavoritos();
-                } else {
-                  await quitarDeFavoritos();
-                }
-              },
+              onTap: () => setState(() => isFavorite = !isFavorite),
               child: _circleButton(
                 isFavorite ? Icons.bookmark : Icons.bookmark_outline,
                 color: isFavorite ? const Color(0xFFFFC107) : Colors.black,
@@ -302,7 +266,7 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
     );
   }
 
-  // ---- Widgets auxiliares ----
+  /// === Widgets auxiliares ===
 
   Widget _circleButton(IconData icon, {Color color = Colors.black}) {
     return Container(
@@ -319,6 +283,33 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
         ],
       ),
       child: Icon(icon, size: 24, color: color),
+    );
+  }
+
+  Widget _buildInfoCard({
+    required IconData icon,
+    required String value,
+    required String label,
+  }) {
+    return Container(
+      width: 75,
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFFFC107), width: 2),
+      ),
+      child: Column(
+        children: [
+          Icon(icon, size: 28),
+          const SizedBox(height: 8),
+          Text(
+            value,
+            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+          ),
+          if (label.isNotEmpty)
+            Text(label, style: const TextStyle(color: Colors.grey)),
+        ],
+      ),
     );
   }
 

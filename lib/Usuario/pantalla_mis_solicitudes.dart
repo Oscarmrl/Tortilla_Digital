@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:tortilla_digital/Usuario/pantalla_mis_solicitudes_detalle.dart';
 
 class PantallaMisSolicitudes extends StatelessWidget {
   const PantallaMisSolicitudes({super.key});
@@ -93,16 +94,24 @@ class PantallaMisSolicitudes extends StatelessWidget {
                       vertical: 6,
                     ),
                     decoration: BoxDecoration(
-                      color: estado ? Colors.green[600] : Colors.orange[600],
+                      color: estado
+                          ? Colors.green[600]
+                          : const Color.fromARGB(255, 247, 44, 44),
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Text(
-                      estado ? "Aprobada" : "En revisión",
+                      estado ? "Aprobada" : "No aprobada",
                       style: const TextStyle(color: Colors.white),
                     ),
                   ),
                   onTap: () {
-                    // Aquí puedes abrir una pantalla con más detalles si quieres
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) =>
+                            PantallaMisSolicitudesDetalle(data: data),
+                      ),
+                    );
                   },
                 ),
               );
