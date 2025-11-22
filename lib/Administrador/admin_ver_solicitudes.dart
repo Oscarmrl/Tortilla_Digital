@@ -66,7 +66,7 @@ class _AdminVerSolicitudesScreenState extends State<AdminVerSolicitudesScreen> {
                 final titulo = data['titulo'] ?? 'Sin título';
                 final descripcion = data['descripcion'] ?? '';
                 final solicitadoPor = data['solicitadoPor'] ?? 'Desconocido';
-                final estadoBool = data['estado'];
+                final estadoBool = data['esAprovada'];
                 final respuesta = data['respuesta'] ?? '';
 
                 String estadoTexto = estadoBool == true
@@ -97,32 +97,15 @@ class _AdminVerSolicitudesScreenState extends State<AdminVerSolicitudesScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        // Header con título y botón de eliminar
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Expanded(
-                              child: Text(
-                                titulo,
-                                style: const TextStyle(
-                                  fontSize: 17,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.black87,
-                                ),
-                              ),
-                            ),
-                            IconButton(
-                              onPressed: () => _mostrarDialogoEliminar(docId),
-                              icon: const Icon(
-                                Icons.delete_outline,
-                                color: Colors.red,
-                              ),
-                              tooltip: 'Eliminar solicitud',
-                            ),
-                          ],
+                        Text(
+                          titulo,
+                          style: const TextStyle(
+                            fontSize: 17,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.black87,
+                          ),
                         ),
                         const SizedBox(height: 10),
-
                         Text(
                           "Descripción: $descripcion",
                           style: _itemTextStyle(),
@@ -145,9 +128,7 @@ class _AdminVerSolicitudesScreenState extends State<AdminVerSolicitudesScreen> {
                             "Fecha: ${DateFormat('dd/MM/yyyy – HH:mm').format(fecha)}",
                             style: _itemTextStyle(),
                           ),
-
                         const SizedBox(height: 16),
-
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
@@ -191,57 +172,6 @@ class _AdminVerSolicitudesScreenState extends State<AdminVerSolicitudesScreen> {
     return TextStyle(fontSize: 14, color: color, height: 1.3);
   }
 
-  // ============================================================
-  // 🔥 FUNCIÓN PARA ELIMINAR SOLICITUD
-  // ============================================================
-  void _mostrarDialogoEliminar(String docId) {
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: const Text('Eliminar Solicitud'),
-          content: const Text(
-            '¿Estás seguro de que quieres eliminar esta solicitud? Esta acción no se puede deshacer.',
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: const Text('Cancelar'),
-            ),
-            TextButton(
-              onPressed: () {
-                Navigator.of(context).pop();
-                _eliminarSolicitud(docId);
-              },
-              style: TextButton.styleFrom(foregroundColor: Colors.red),
-              child: const Text('Eliminar'),
-            ),
-          ],
-        );
-      },
-    );
-  }
-
-  void _eliminarSolicitud(String docId) async {
-    try {
-      await solicitudesRef.doc(docId).delete();
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Solicitud eliminada correctamente'),
-          backgroundColor: Colors.green,
-        ),
-      );
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Error al eliminar: $e'),
-          backgroundColor: Colors.red,
-        ),
-      );
-    }
-  }
-
   void _actualizarSolicitud(
     String docId,
     bool nuevoEstado,
@@ -250,37 +180,32 @@ class _AdminVerSolicitudesScreenState extends State<AdminVerSolicitudesScreen> {
     try {
       final solicitudDoc = await solicitudesRef.doc(docId).get();
       final data = solicitudDoc.data() as Map<String, dynamic>;
-
-      // 1. Actualizar estado en SolicitudReceta
       await solicitudesRef.doc(docId).update({
-        'estado': nuevoEstado,
+        'esAprovada': nuevoEstado,
         'respuesta': nuevaRespuesta,
       });
-
-      // ----------------------------------------
-      // 2. Si es aprobada → copiar a Recetas
-      // ----------------------------------------
       if (nuevoEstado == true) {
         await FirebaseFirestore.instance.collection('Recetas').add({
-          ...data,
-          'estado': true,
+          'categoria': data['categoria'],
+          'descripcion': data['descripcion'],
+          'esAprovada': true,
+          'fechaCreacion': data['fechaCreacion'],
+          'imagenUrl': data['imagen'],
+          'ingredientes': data['ingredientes'],
+          'pasos': data['pasos'],
+          'titulo': data['titulo'],
+          'tiempo': data['tiempo'],
           'fechaAprobacion': Timestamp.now(),
+          'rating': 4.8,
         });
       }
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Solicitud actualizada'),
-          backgroundColor: Colors.green,
-        ),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Solicitud actualizada')));
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Error al actualizar: $e'),
-          backgroundColor: Colors.red,
-        ),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Error al actualizar: $e')));
     }
   }
 }

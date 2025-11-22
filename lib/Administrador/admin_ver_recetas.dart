@@ -1,4 +1,3 @@
-// lib/Administrador/admin_ver_recetas.dart
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
@@ -17,16 +16,12 @@ class _AdminVerRecetasState extends State<AdminVerRecetas> {
   final CollectionReference recetasRef = FirebaseFirestore.instance.collection(
     'Recetas',
   );
-
-  // Controllers para edición (reutilizables)
   final TextEditingController _tituloController = TextEditingController();
   final TextEditingController _descripcionController = TextEditingController();
   final TextEditingController _categoriaController = TextEditingController();
   final TextEditingController _imagenUrlController = TextEditingController();
   final TextEditingController _ingredienteController = TextEditingController();
   final TextEditingController _pasoController = TextEditingController();
-
-  // Para búsqueda dentro de esta pantalla
   final TextEditingController _searchController = TextEditingController();
 
   List<String> _ingredientes = [];
@@ -68,7 +63,6 @@ class _AdminVerRecetasState extends State<AdminVerRecetas> {
       ),
       body: Column(
         children: [
-          // Barra de búsqueda FIJA
           Padding(
             padding: const EdgeInsets.fromLTRB(20, 12, 20, 12),
             child: Container(
@@ -88,8 +82,6 @@ class _AdminVerRecetasState extends State<AdminVerRecetas> {
               ),
             ),
           ),
-
-          // Lista / grid de recetas - EXPANDIDO para tomar todo el espacio restante
           Expanded(
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 20),
@@ -120,8 +112,6 @@ class _AdminVerRecetasState extends State<AdminVerRecetas> {
                         }
 
                         final all = snapshot.data!.docs;
-
-                        // Aplicar filtro local por título
                         final filtro = _searchController.text
                             .trim()
                             .toLowerCase();
@@ -145,10 +135,8 @@ class _AdminVerRecetasState extends State<AdminVerRecetas> {
     );
   }
 
-  // Construye el grid con diseño parecido a PantallaInicio
   Widget _buildGrid(List<QueryDocumentSnapshot> recetas) {
     return GridView.builder(
-      // QUITAR TODO EL PADDING que pueda causar overflow
       padding: EdgeInsets.zero,
       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
         crossAxisCount: 2,
@@ -195,7 +183,6 @@ class _AdminVerRecetasState extends State<AdminVerRecetas> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Imagen
                 ClipRRect(
                   borderRadius: const BorderRadius.vertical(
                     top: Radius.circular(16),
@@ -239,7 +226,6 @@ class _AdminVerRecetasState extends State<AdminVerRecetas> {
                       Row(
                         mainAxisAlignment: MainAxisAlignment.end,
                         children: [
-                          // Edit button
                           GestureDetector(
                             onTap: () {
                               _navegarAEditarReceta(receta);
@@ -254,7 +240,6 @@ class _AdminVerRecetasState extends State<AdminVerRecetas> {
                             ),
                           ),
                           const SizedBox(width: 8),
-                          // Delete button
                           GestureDetector(
                             onTap: () {
                               _confirmarEliminar(receta.id, titulo);
@@ -285,9 +270,6 @@ class _AdminVerRecetasState extends State<AdminVerRecetas> {
     );
   }
 
-  // -----------------------------------------------------
-  // Navegar a pantalla de detalles en lugar de diálogo
-  // -----------------------------------------------------
   void _navegarADetallesReceta({
     required QueryDocumentSnapshot receta,
     required String titulo,
@@ -325,13 +307,8 @@ class _AdminVerRecetasState extends State<AdminVerRecetas> {
     );
   }
 
-  // -----------------------------------------------------
-  // Navegar a pantalla de edición en lugar de diálogo
-  // -----------------------------------------------------
   void _navegarAEditarReceta(QueryDocumentSnapshot recetaDoc) async {
     final recetaData = recetaDoc.data() as Map<String, dynamic>;
-
-    // Rellenar controladores con datos actuales
     _tituloController.text = recetaData['titulo'] ?? '';
     _descripcionController.text = recetaData['descripcion'] ?? '';
     _categoriaController.text = recetaData['categoria'] ?? '';
@@ -358,13 +335,10 @@ class _AdminVerRecetasState extends State<AdminVerRecetas> {
     );
 
     if (resultado == true) {
-      setState(() {}); // Refrescar la lista
+      setState(() {});
     }
   }
 
-  // -----------------------------------------------------
-  // Confirmación eliminar (este sí puede ser diálogo simple)
-  // -----------------------------------------------------
   void _confirmarEliminar(String recetaId, String titulo) {
     showDialog(
       context: context,
@@ -393,9 +367,6 @@ class _AdminVerRecetasState extends State<AdminVerRecetas> {
     );
   }
 
-  // -----------------------------------------------------
-  // Eliminar receta en Firestore
-  // -----------------------------------------------------
   Future<void> _eliminarReceta(String recetaId, String titulo) async {
     try {
       await recetasRef.doc(recetaId).delete();
@@ -406,7 +377,7 @@ class _AdminVerRecetasState extends State<AdminVerRecetas> {
           backgroundColor: Colors.green.shade400,
         ),
       );
-      setState(() {}); // Refrescar la lista
+      setState(() {});
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -418,7 +389,6 @@ class _AdminVerRecetasState extends State<AdminVerRecetas> {
     }
   }
 
-  // Valida formulario
   bool _validarFormulario() {
     if (_tituloController.text.trim().isEmpty) {
       ScaffoldMessenger.of(
@@ -441,7 +411,6 @@ class _AdminVerRecetasState extends State<AdminVerRecetas> {
     return true;
   }
 
-  // Limpia controladores
   void _limpiarFormulario() {
     _tituloController.clear();
     _descripcionController.clear();
@@ -454,9 +423,6 @@ class _AdminVerRecetasState extends State<AdminVerRecetas> {
   }
 }
 
-// -----------------------------------------------------
-// PANTALLA SEPARADA PARA DETALLES DE RECETA
-// -----------------------------------------------------
 class _DetallesRecetaScreen extends StatelessWidget {
   final String titulo;
   final String descripcion;
@@ -502,7 +468,6 @@ class _DetallesRecetaScreen extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Imagen
             if (imagenUrl.isNotEmpty)
               Image.network(
                 imagenUrl,
@@ -515,8 +480,6 @@ class _DetallesRecetaScreen extends StatelessWidget {
                   child: const Icon(Icons.image, size: 50, color: Colors.white),
                 ),
               ),
-
-            // Información básica
             Padding(
               padding: const EdgeInsets.all(16),
               child: Column(
@@ -543,7 +506,7 @@ class _DetallesRecetaScreen extends StatelessWidget {
                       _buildInfoChip('Creado por: $creadoPor', Icons.person),
                       if (fecha != null)
                         _buildInfoChip(
-                          'Fecha: ${DateFormat('dd/MM/yyyy').format(fecha!)}', // AÑADÍ ! para convertir DateTime? a DateTime
+                          'Fecha: ${DateFormat('dd/MM/yyyy').format(fecha!)}',
                           Icons.calendar_today,
                         ),
                     ],
@@ -551,8 +514,6 @@ class _DetallesRecetaScreen extends StatelessWidget {
                 ],
               ),
             ),
-
-            // Ingredientes
             Padding(
               padding: const EdgeInsets.all(16),
               child: Column(
@@ -576,8 +537,6 @@ class _DetallesRecetaScreen extends StatelessWidget {
                 ],
               ),
             ),
-
-            // Pasos
             Padding(
               padding: const EdgeInsets.all(16),
               child: Column(
@@ -644,9 +603,6 @@ class _DetallesRecetaScreen extends StatelessWidget {
   }
 }
 
-// -----------------------------------------------------
-// PANTALLA SEPARADA PARA EDITAR RECETA
-// -----------------------------------------------------
 class _EditarRecetaScreen extends StatefulWidget {
   final TextEditingController tituloController;
   final TextEditingController descripcionController;
@@ -692,7 +648,6 @@ class __EditarRecetaScreenState extends State<_EditarRecetaScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Título
             TextField(
               controller: widget.tituloController,
               decoration: InputDecoration(
@@ -706,8 +661,6 @@ class __EditarRecetaScreenState extends State<_EditarRecetaScreen> {
               ),
             ),
             const SizedBox(height: 12),
-
-            // Descripción
             TextField(
               controller: widget.descripcionController,
               maxLines: 3,
@@ -722,8 +675,6 @@ class __EditarRecetaScreenState extends State<_EditarRecetaScreen> {
               ),
             ),
             const SizedBox(height: 12),
-
-            // Categoría
             TextField(
               controller: widget.categoriaController,
               decoration: InputDecoration(
@@ -737,8 +688,6 @@ class __EditarRecetaScreenState extends State<_EditarRecetaScreen> {
               ),
             ),
             const SizedBox(height: 12),
-
-            // Imagen URL
             TextField(
               controller: widget.imagenUrlController,
               decoration: InputDecoration(
@@ -753,8 +702,6 @@ class __EditarRecetaScreenState extends State<_EditarRecetaScreen> {
               ),
             ),
             const SizedBox(height: 12),
-
-            // Vista previa
             if (widget.imagenUrlController.text.isNotEmpty)
               ClipRRect(
                 borderRadius: BorderRadius.circular(10),
@@ -772,8 +719,6 @@ class __EditarRecetaScreenState extends State<_EditarRecetaScreen> {
               ),
             if (widget.imagenUrlController.text.isNotEmpty)
               const SizedBox(height: 12),
-
-            // Ingredientes
             const Text(
               'Ingredientes',
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
@@ -807,8 +752,6 @@ class __EditarRecetaScreenState extends State<_EditarRecetaScreen> {
               ],
             ),
             const SizedBox(height: 10),
-
-            // Chips ingredientes
             if (widget.ingredientes.isNotEmpty)
               Wrap(
                 spacing: 8,
@@ -823,8 +766,6 @@ class __EditarRecetaScreenState extends State<_EditarRecetaScreen> {
                 }).toList(),
               ),
             if (widget.ingredientes.isNotEmpty) const SizedBox(height: 16),
-
-            // Pasos
             const Text(
               'Pasos',
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
@@ -859,8 +800,6 @@ class __EditarRecetaScreenState extends State<_EditarRecetaScreen> {
               ],
             ),
             const SizedBox(height: 10),
-
-            // Lista de pasos
             if (widget.pasos.isNotEmpty)
               Column(
                 children: widget.pasos.asMap().entries.map((entry) {
@@ -936,7 +875,7 @@ class __EditarRecetaScreenState extends State<_EditarRecetaScreen> {
       });
 
       if (!mounted) return;
-      Navigator.of(context).pop(true); // Retornar éxito
+      Navigator.of(context).pop(true);
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Receta actualizada correctamente'),

@@ -15,7 +15,7 @@ class _AdminPageState extends State<AdminPage> {
 
   Future<void> _logout() async {
     await _auth.signOut();
-    Get.offAllNamed('/login'); // Regresa al login y elimina historial
+    Get.offAllNamed('/login');
   }
 
   @override

@@ -145,7 +145,6 @@ class _AdminAgregarRecetaScreenState extends State<AdminAgregarRecetaScreen> {
     );
   }
 
-  // ======= CAMPO LIBRE PARA ESCRIBIR EL TIEMPO ========
   Widget _campoTiempoLibre() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -192,7 +191,6 @@ class _AdminAgregarRecetaScreenState extends State<AdminAgregarRecetaScreen> {
     );
   }
 
-  // ======= SELECTOR DE IMAGEN CON SUBIDA A FIREBASE STORAGE ========
   Widget _selectorImagen() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -305,7 +303,6 @@ class _AdminAgregarRecetaScreenState extends State<AdminAgregarRecetaScreen> {
     );
   }
 
-  // ======= FUNCIÓN PARA SELECCIONAR IMAGEN ========
   Future<void> _seleccionarImagen() async {
     try {
       final XFile? imagen = await _picker.pickImage(
@@ -327,7 +324,6 @@ class _AdminAgregarRecetaScreenState extends State<AdminAgregarRecetaScreen> {
     }
   }
 
-  // ======= FUNCIÓN PARA SUBIR IMAGEN A FIREBASE STORAGE ========
   Future<String?> _subirImagenAFirebase() async {
     if (_imagenSeleccionada == null) return null;
 
@@ -335,17 +331,13 @@ class _AdminAgregarRecetaScreenState extends State<AdminAgregarRecetaScreen> {
       setState(() {
         _subiendoImagen = true;
       });
-
-      // Crear referencia única para la imagen
       String nombreArchivo =
           'receta_${DateTime.now().millisecondsSinceEpoch}.jpg';
       Reference referencia = _storage.ref().child(nombreArchivo);
 
-      // Subir la imagen
       UploadTask uploadTask = referencia.putFile(_imagenSeleccionada!);
       TaskSnapshot snapshot = await uploadTask;
 
-      // Obtener la URL de descarga
       String downloadURL = await snapshot.ref.getDownloadURL();
 
       return downloadURL;
@@ -361,7 +353,6 @@ class _AdminAgregarRecetaScreenState extends State<AdminAgregarRecetaScreen> {
     }
   }
 
-  // ======= CAMPOS DE TEXTO MODERNOS ========
   Widget _campoTexto(
     String label,
     TextEditingController controller, {
@@ -398,7 +389,6 @@ class _AdminAgregarRecetaScreenState extends State<AdminAgregarRecetaScreen> {
     );
   }
 
-  // ======= FUNCIONALIDAD PARA GUARDAR =========
   void _guardarReceta() async {
     if (_formKey.currentState!.validate()) {
       if (_imagenSeleccionada == null) {
@@ -422,7 +412,6 @@ class _AdminAgregarRecetaScreenState extends State<AdminAgregarRecetaScreen> {
           .toList();
 
       try {
-        // Verificar título duplicado
         QuerySnapshot existing = await recetasRef
             .where('titulo', isEqualTo: tituloController.text)
             .get();
@@ -438,8 +427,6 @@ class _AdminAgregarRecetaScreenState extends State<AdminAgregarRecetaScreen> {
           );
           return;
         }
-
-        // Subir imagen a Firebase Storage
         String? imagenUrl = await _subirImagenAFirebase();
 
         if (imagenUrl == null) {
@@ -451,15 +438,13 @@ class _AdminAgregarRecetaScreenState extends State<AdminAgregarRecetaScreen> {
           );
           return;
         }
-
-        // Guardar receta en Firestore
         await recetasRef.add({
           'titulo': tituloController.text,
           'descripcion': descripcionController.text,
           'categoria': categoriaController.text,
           'tiempo': tiempoController.text,
           'rating': ratingController.text,
-          'imagenUrl': imagenUrl, // URL de Firebase Storage
+          'imagenUrl': imagenUrl,
           'ingredientes': ingredientes,
           'pasos': pasos,
           'esAprovada': true,
