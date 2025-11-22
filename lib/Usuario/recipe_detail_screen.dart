@@ -8,7 +8,7 @@ class RecipeDetailScreen extends StatefulWidget {
   final double rating;
   final String time;
   final List<String> ingredientes;
-  final List<String> pasos; // ✅ Agregado a la clase
+  final List<String> pasos;
   final String idReceta;
   final String userId;
 
@@ -20,7 +20,7 @@ class RecipeDetailScreen extends StatefulWidget {
     required this.rating,
     required this.time,
     required this.ingredientes,
-    required this.pasos, // ✅ Ahora es parte de la clase
+    required this.pasos,
     required this.idReceta,
     required this.userId,
   });
@@ -31,15 +31,52 @@ class RecipeDetailScreen extends StatefulWidget {
 
 class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
   bool isFavorite = false;
+  double userRating = 0;
 
   @override
   void initState() {
     super.initState();
-    // Agregar receta visitada al historial
     agregarRecetaAlHistorial();
+    verificarFavorito();
+    cargarCalificacionUsuario();
   }
 
-  /// Guarda automáticamente la receta visitada en Firestore
+  /// 🔥 Verifica si ya es favorito
+  Future<void> verificarFavorito() async {
+    final userDoc = await FirebaseFirestore.instance
+        .collection('usuarios')
+        .doc(widget.userId)
+        .get();
+
+    List favoritos = userDoc.data()?['favoritos'] ?? [];
+
+    setState(() {
+      isFavorite = favoritos.contains(widget.idReceta);
+    });
+  }
+
+  /// ⭐ Agregar o quitar de favoritos
+  Future<void> toggleFavorito() async {
+    final userRef = FirebaseFirestore.instance
+        .collection('usuarios')
+        .doc(widget.userId);
+
+    if (isFavorite) {
+      await userRef.update({
+        'favoritos': FieldValue.arrayRemove([widget.idReceta]),
+      });
+    } else {
+      await userRef.update({
+        'favoritos': FieldValue.arrayUnion([widget.idReceta]),
+      });
+    }
+
+    setState(() {
+      isFavorite = !isFavorite;
+    });
+  }
+
+  /// Guarda visita en historial
   Future<void> agregarRecetaAlHistorial() async {
     final userRef = FirebaseFirestore.instance
         .collection('usuarios')
@@ -48,35 +85,145 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
     await FirebaseFirestore.instance.runTransaction((transaction) async {
       final snapshot = await transaction.get(userRef);
 
-      if (!snapshot.exists) {
-        print("❌ Usuario no existe.");
-        return;
-      }
+      if (!snapshot.exists) return;
 
       List historial = snapshot.data()?['historial'] ?? [];
 
       historial.add({'idReceta': widget.idReceta, 'fecha': Timestamp.now()});
 
-      // Limitar historial a 10
       if (historial.length > 10) historial.removeAt(0);
 
       transaction.update(userRef, {'historial': historial});
     });
+  }
 
-    print("✔ Receta añadida al historial exitosamente");
+  /// ⭐ Cargar calificación del usuario si ya existe (CORREGIDO)
+  Future<void> cargarCalificacionUsuario() async {
+    final doc = await FirebaseFirestore.instance
+        .collection('recetas')
+        .doc(widget.idReceta)
+        .collection('calificaciones')
+        .doc(widget.userId)
+        .get();
+
+    if (doc.exists) {
+      setState(() {
+        userRating = double.tryParse(doc['rating'].toString()) ?? 0;
+      });
+    }
+  }
+
+  /// ⭐ Guardar calificación
+  Future<void> guardarCalificacion(double rating) async {
+    final ratingRef = FirebaseFirestore.instance
+        .collection('recetas')
+        .doc(widget.idReceta)
+        .collection('calificaciones')
+        .doc(widget.userId);
+
+    await ratingRef.set({
+      'rating': rating,
+      'userId': widget.userId,
+      'fecha': Timestamp.now(),
+    });
+
+    await actualizarPromedio();
+
+    setState(() {
+      userRating = rating;
+    });
+  }
+
+  /// ⭐ Recalcular el promedio (CORREGIDO PARA STRING)
+  Future<void> actualizarPromedio() async {
+    final ratingsRef = FirebaseFirestore.instance
+        .collection('recetas')
+        .doc(widget.idReceta)
+        .collection('calificaciones');
+
+    final snapshot = await ratingsRef.get();
+
+    if (snapshot.docs.isEmpty) return;
+
+    double total = 0;
+    for (var doc in snapshot.docs) {
+      total += double.tryParse(doc['rating'].toString()) ?? 0;
+    }
+
+    double promedio = total / snapshot.docs.length;
+
+    await FirebaseFirestore.instance
+        .collection('recetas')
+        .doc(widget.idReceta)
+        .update({'rating': promedio.toStringAsFixed(1)}); // STRING
+  }
+
+  /// ⭐ Mostrar modal para calificar
+  void mostrarModalCalificacion() {
+    showDialog(
+      context: context,
+      builder: (_) {
+        double tempRating = userRating;
+
+        return AlertDialog(
+          title: Text("Califica esta receta"),
+          content: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: List.generate(5, (i) {
+              int star = i + 1;
+              return IconButton(
+                onPressed: () {
+                  setState(() {
+                    tempRating = star.toDouble();
+                  });
+                },
+                icon: Icon(
+                  Icons.star,
+                  size: 32,
+                  color: star <= tempRating ? Colors.amber : Colors.grey,
+                ),
+              );
+            }),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: Text("Cancelar"),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                guardarCalificacion(tempRating);
+                Navigator.pop(context);
+              },
+              child: Text("Guardar"),
+            ),
+          ],
+        );
+      },
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: mostrarModalCalificacion,
+        label: Text(
+          userRating == 0
+              ? "Calificar receta"
+              : "Tu calificación: ${userRating.toStringAsFixed(1)} ⭐",
+        ),
+        icon: Icon(Icons.star),
+        backgroundColor: Colors.amber,
+      ),
       body: Stack(
         children: [
           SingleChildScrollView(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // IMAGEN PRINCIPAL
+                // Imagen principal
                 Stack(
                   children: [
                     Image.network(
@@ -102,7 +249,6 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
                   ],
                 ),
 
-                // CONTENIDO
                 Transform.translate(
                   offset: const Offset(0, -30),
                   child: Container(
@@ -118,7 +264,7 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          // TÍTULO + RATING
+                          // Título, categoría y rating promedio
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
@@ -158,7 +304,10 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
                                     const Icon(Icons.star, size: 20),
                                     const SizedBox(width: 4),
                                     Text(
-                                      widget.rating.toString(),
+                                      double.tryParse(
+                                            widget.rating.toString(),
+                                          )?.toStringAsFixed(1) ??
+                                          "0.0",
                                       style: const TextStyle(
                                         fontWeight: FontWeight.bold,
                                       ),
@@ -171,7 +320,7 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
 
                           const SizedBox(height: 24),
 
-                          // INFO CARDS
+                          // Tarjetas de información
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
@@ -195,7 +344,7 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
 
                           const SizedBox(height: 32),
 
-                          // INGREDIENTES
+                          // Ingredientes
                           const Text(
                             'Ingredientes',
                             style: TextStyle(
@@ -212,7 +361,7 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
 
                           const SizedBox(height: 32),
 
-                          // DIRECCIONES / PASOS
+                          // Pasos
                           const Text(
                             'Pasos',
                             style: TextStyle(
@@ -221,8 +370,6 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
                             ),
                           ),
                           const SizedBox(height: 16),
-
-                          // ✅ AQUÍ USAMOS LOS PASOS DINÁMICOS
                           ...widget.pasos.asMap().entries.map((entry) {
                             int index = entry.key;
                             String paso = entry.value;
@@ -239,7 +386,7 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
             ),
           ),
 
-          // BOTÓN VOLVER
+          // Botón volver
           Positioned(
             top: 50,
             left: 20,
@@ -249,15 +396,15 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
             ),
           ),
 
-          // FAVORITO
+          // Botón favorito
           Positioned(
             top: 50,
             right: 20,
             child: GestureDetector(
-              onTap: () => setState(() => isFavorite = !isFavorite),
+              onTap: toggleFavorito,
               child: _circleButton(
                 isFavorite ? Icons.bookmark : Icons.bookmark_outline,
-                color: isFavorite ? const Color(0xFFFFC107) : Colors.black,
+                color: isFavorite ? Colors.amber : Colors.black,
               ),
             ),
           ),
@@ -266,7 +413,7 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
     );
   }
 
-  /// === Widgets auxiliares ===
+  // === WIDGETS AUXILIARES ===
 
   Widget _circleButton(IconData icon, {Color color = Colors.black}) {
     return Container(
@@ -306,8 +453,7 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
             value,
             style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
           ),
-          if (label.isNotEmpty)
-            Text(label, style: const TextStyle(color: Colors.grey)),
+          Text(label, style: const TextStyle(color: Colors.grey)),
         ],
       ),
     );

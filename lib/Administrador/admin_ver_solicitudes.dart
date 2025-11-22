@@ -1,4 +1,3 @@
-// lib/Administrador/admin_ver_solicitudes.dart
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
@@ -38,13 +37,15 @@ class _AdminVerSolicitudesScreenState extends State<AdminVerSolicitudesScreen> {
         child: StreamBuilder<QuerySnapshot>(
           stream: solicitudesRef.snapshots(),
           builder: (context, snapshot) {
-            if (snapshot.connectionState == ConnectionState.waiting) {
+            if (!snapshot.hasData) {
               return const Center(
                 child: CircularProgressIndicator(color: Color(0xFFFFC107)),
               );
             }
 
-            if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+            final solicitudes = snapshot.data!.docs;
+
+            if (solicitudes.isEmpty) {
               return const Center(
                 child: Text(
                   'No hay solicitudes',
@@ -57,8 +58,6 @@ class _AdminVerSolicitudesScreenState extends State<AdminVerSolicitudesScreen> {
               );
             }
 
-            final solicitudes = snapshot.data!.docs;
-
             return ListView.builder(
               itemCount: solicitudes.length,
               itemBuilder: (context, index) {
@@ -69,17 +68,13 @@ class _AdminVerSolicitudesScreenState extends State<AdminVerSolicitudesScreen> {
                 final descripcion = data['descripcion'] ?? '';
                 final solicitadoPor = data['solicitadoPor'] ?? 'Desconocido';
                 final estadoBool = data['estado'];
-
-                String estadoTexto;
-
-                if (estadoBool == true) {
-                  estadoTexto = 'Aprobada';
-                } else if (estadoBool == false) {
-                  estadoTexto = 'Rechazada';
-                } else {
-                  estadoTexto = 'Pendiente';
-                }
                 final respuesta = data['respuesta'] ?? '';
+
+                String estadoTexto = estadoBool == true
+                    ? 'Aprobada'
+                    : estadoBool == false
+                    ? 'Rechazada'
+                    : 'Pendiente';
 
                 final fecha = data['fechaCreacion'] != null
                     ? (data['fechaCreacion'] as Timestamp).toDate()
@@ -92,7 +87,7 @@ class _AdminVerSolicitudesScreenState extends State<AdminVerSolicitudesScreen> {
                     borderRadius: BorderRadius.circular(18),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.05),
+                        color: Colors.black.withOpacity(0.05),
                         blurRadius: 10,
                         offset: const Offset(0, 5),
                       ),
@@ -103,7 +98,6 @@ class _AdminVerSolicitudesScreenState extends State<AdminVerSolicitudesScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        // Título
                         Text(
                           titulo,
                           style: const TextStyle(
@@ -114,7 +108,6 @@ class _AdminVerSolicitudesScreenState extends State<AdminVerSolicitudesScreen> {
                         ),
                         const SizedBox(height: 10),
 
-                        // Información
                         Text(
                           "Descripción: $descripcion",
                           style: _itemTextStyle(),
@@ -124,7 +117,7 @@ class _AdminVerSolicitudesScreenState extends State<AdminVerSolicitudesScreen> {
                           style: _itemTextStyle(),
                         ),
                         Text(
-                          'Estado: $estadoTexto',
+                          "Estado: $estadoTexto",
                           style: _itemTextStyle(color: Colors.orange),
                         ),
                         if (respuesta.isNotEmpty)
@@ -140,41 +133,29 @@ class _AdminVerSolicitudesScreenState extends State<AdminVerSolicitudesScreen> {
 
                         const SizedBox(height: 16),
 
-                        // Botones
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
                             ElevatedButton(
                               onPressed: () => _actualizarSolicitud(
                                 docId,
-
                                 true,
-
                                 '¡Solicitud aceptada!',
                               ),
-
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: Colors.green,
                               ),
-
                               child: const Text('Aceptar'),
                             ),
-
-                            const SizedBox(width: 10),
-
                             ElevatedButton(
                               onPressed: () => _actualizarSolicitud(
                                 docId,
-
                                 false,
-
                                 'Lo sentimos, rechazada',
                               ),
-
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: Colors.red,
                               ),
-
                               child: const Text('Rechazar'),
                             ),
                           ],
@@ -191,66 +172,49 @@ class _AdminVerSolicitudesScreenState extends State<AdminVerSolicitudesScreen> {
     );
   }
 
-  // ==============================
-  // 🔹 Helpers visuales
-  // ==============================
   TextStyle _itemTextStyle({Color color = Colors.black54}) {
     return TextStyle(fontSize: 14, color: color, height: 1.3);
   }
 
-  Widget _styledButton({
-    required String text,
-    required Color color,
-    required Color textColor,
-    required VoidCallback onPressed,
-  }) {
-    return Expanded(
-      child: ElevatedButton(
-        onPressed: onPressed,
-        style: ElevatedButton.styleFrom(
-          backgroundColor: color,
-          foregroundColor: textColor,
-          padding: const EdgeInsets.symmetric(vertical: 12),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(14),
-          ),
-          elevation: 1.5,
-        ),
-        child: Text(
-          text,
-          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
-        ),
-      ),
-    );
-  }
-
-  // ==============================
-  // 🔹 Función ya existente (sin cambios)
-  // ==============================
-
+  // ============================================================
+  // 🔥 AQUÍ ESTÁ EL CAMBIO IMPORTANTE: MOVER A LA COLECCIÓN RECETAS
+  // ============================================================
   void _actualizarSolicitud(
     String docId,
-
     bool nuevoEstado,
-
     String nuevaRespuesta,
-  ) {
-    solicitudesRef
-        .doc(docId)
-        .update({
-          'estado': nuevoEstado, // <-- ahora es BOOLEANO
+  ) async {
+    try {
+      final solicitudDoc = await solicitudesRef.doc(docId).get();
+      final data = solicitudDoc.data() as Map<String, dynamic>;
 
-          'respuesta': nuevaRespuesta,
-        })
-        .then((_) {
-          ScaffoldMessenger.of(
-            context,
-          ).showSnackBar(SnackBar(content: Text('Solicitud actualizada')));
-        })
-        .catchError((error) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Error al actualizar: $error')),
-          );
+      // 1. Actualizar estado en SolicitudReceta
+      await solicitudesRef.doc(docId).update({
+        'estado': nuevoEstado,
+        'respuesta': nuevaRespuesta,
+      });
+
+      // ----------------------------------------
+      // 2. Si es aprobada → copiar a Recetas
+      // ----------------------------------------
+      if (nuevoEstado == true) {
+        await FirebaseFirestore.instance.collection('Recetas').add({
+          ...data,
+          'estado': true,
+          'fechaAprobacion': Timestamp.now(),
         });
+
+        // OPCIONAL: eliminar solicitud
+        // await solicitudesRef.doc(docId).delete();
+      }
+
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Solicitud actualizada')));
+    } catch (e) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Error al actualizar: $e')));
+    }
   }
 }

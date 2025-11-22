@@ -9,116 +9,169 @@ class PantallaMisSolicitudesDetalle extends StatelessWidget {
   Widget build(BuildContext context) {
     final titulo = data["titulo"] ?? "";
     final descripcion = data["descripcion"] ?? "";
-    final ingredientes = data["ingredientes"] ?? "";
-    final pasos = data["pasos"] ?? "";
-    final categorias = data["categoria"] ?? [];
+
+    final ingredientesRaw = data["ingredientes"];
+    late final String ingredientes = (ingredientesRaw is List)
+        ? ingredientesRaw.join("\n")
+        : (ingredientesRaw ?? "");
+
+    final pasosRaw = data["pasos"];
+    late final String pasos = (pasosRaw is List)
+        ? pasosRaw.join("\n")
+        : (pasosRaw ?? "");
+
+    final categoriasRaw = data["categoria"];
+    late final List<String> categorias = (categoriasRaw is List)
+        ? categoriasRaw.cast<String>()
+        : (categoriasRaw is String)
+        ? [categoriasRaw]
+        : [];
+
+    final tiempoCompleto = data["tiempo"] ?? "";
     final imagen = data["imagen"] ?? "";
-    final estado = data["estado"] ?? false;
+    final esAprovada = data["esAprovada"] ?? false;
 
     return Scaffold(
+      backgroundColor: Colors.white,
       appBar: AppBar(
-        title: const Text("Detalle de la receta"),
-        backgroundColor: Colors.orange,
+        backgroundColor: Colors.white,
+        elevation: 0.4,
+        centerTitle: true,
+        title: const Text(
+          "Detalle de la receta",
+          style: TextStyle(color: Colors.black87, fontWeight: FontWeight.bold),
+        ),
+        iconTheme: const IconThemeData(color: Colors.black87),
       ),
+
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(18),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // IMAGEN
+            // ----------- IMAGEN -----------
             ClipRRect(
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(18),
               child: imagen.isNotEmpty
                   ? Image.network(
                       imagen,
                       width: double.infinity,
-                      height: 200,
+                      height: 220,
                       fit: BoxFit.cover,
                     )
                   : Container(
-                      width: double.infinity,
-                      height: 200,
-                      color: Colors.grey[300],
-                      child: Icon(
-                        Icons.image,
-                        size: 80,
-                        color: Colors.grey[700],
+                      height: 220,
+                      decoration: BoxDecoration(
+                        color: Colors.grey[200],
+                        borderRadius: BorderRadius.circular(18),
+                      ),
+                      child: const Center(
+                        child: Icon(Icons.image, size: 80, color: Colors.grey),
                       ),
                     ),
             ),
+
             const SizedBox(height: 20),
 
-            // TÍTULO
+            // ----------- TÍTULO Y ESTATUS -----------
             Text(
               titulo,
-              style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+              style: const TextStyle(
+                fontSize: 26,
+                fontWeight: FontWeight.bold,
+                color: Colors.black87,
+              ),
             ),
+
             const SizedBox(height: 10),
 
-            // ESTADO
-            Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 10,
-                    vertical: 4,
-                  ),
-                  decoration: BoxDecoration(
-                    color: estado ? Colors.green[600] : Colors.orange[600],
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Text(
-                    estado ? "Aprobada" : "En revisión",
-                    style: const TextStyle(color: Colors.white, fontSize: 14),
-                  ),
-                ),
-              ],
-            ),
-
-            const SizedBox(height: 20),
-
-            // CATEGORÍA
-            Text(
-              "Categoría:",
-              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-            ),
-            Text(categorias.join(", "), style: const TextStyle(fontSize: 16)),
-            const SizedBox(height: 20),
-
-            // DESCRIPCIÓN
-            const Text(
-              "Descripción:",
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-            ),
-            Text(descripcion, style: const TextStyle(fontSize: 16)),
-            const SizedBox(height: 20),
-
-            // INGREDIENTES
-            const Text(
-              "Ingredientes:",
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-            ),
-            Text(ingredientes, style: const TextStyle(fontSize: 16)),
-            const SizedBox(height: 20),
-
-            // PASOS
-            const Text(
-              "Pasos de preparación:",
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-            ),
-            Text(pasos, style: const TextStyle(fontSize: 16)),
-            const SizedBox(height: 50),
-            const Text(
-              "Esta es una version preliminar, si es aprobada el diseño final puede variar.",
-              style: TextStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.normal,
-                color: Colors.grey,
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              decoration: BoxDecoration(
+                color: esAprovada ? Colors.green[600] : const Color(0xFFFFC107),
+                borderRadius: BorderRadius.circular(10),
               ),
-              textAlign: TextAlign.center,
+              child: Text(
+                esAprovada ? "Aprobada" : "En revisión",
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
             ),
+
+            const SizedBox(height: 25),
+
+            // ----------- TARJETA DE INFORMACIÓN -----------
+            _cardSeccion(title: "Categoría", content: categorias.join(", ")),
+
+            _cardSeccion(title: "Descripción", content: descripcion),
+
+            _cardSeccion(
+              title: "Tiempo de preparación",
+              content: tiempoCompleto,
+            ),
+
+            _cardSeccion(title: "Ingredientes", content: ingredientes),
+
+            _cardSeccion(title: "Pasos de preparación", content: pasos),
+
+            const SizedBox(height: 40),
+
+            const Center(
+              child: Text(
+                "Esta es una versión preliminar, si es aprobada el diseño final puede variar.",
+                style: TextStyle(fontSize: 13, color: Colors.grey),
+                textAlign: TextAlign.center,
+              ),
+            ),
+
+            const SizedBox(height: 20),
           ],
         ),
+      ),
+    );
+  }
+
+  // ----------- TARJETA DE SECCIÓN UNIFORME -----------
+  Widget _cardSeccion({required String title, required String content}) {
+    return Container(
+      width: double.infinity,
+      margin: const EdgeInsets.only(bottom: 18),
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: Colors.grey[50],
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.03),
+            blurRadius: 6,
+            offset: const Offset(0, 3),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            title,
+            style: const TextStyle(
+              fontSize: 17,
+              fontWeight: FontWeight.bold,
+              color: Colors.black87,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            content,
+            style: const TextStyle(
+              fontSize: 15,
+              color: Colors.black87,
+              height: 1.4,
+            ),
+          ),
+        ],
       ),
     );
   }
