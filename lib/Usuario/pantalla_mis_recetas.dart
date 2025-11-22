@@ -33,7 +33,7 @@ class _PantallaMisRecetasState extends State<PantallaMisRecetas> {
   @override
   void initState() {
     super.initState();
-    _selectedCategory = categories.first; // OPCIÓN 2 IMPLEMENTADA
+    _selectedCategory = categories.first;
   }
 
   Future<void> enviarSolicitud() async {
@@ -72,10 +72,12 @@ class _PantallaMisRecetasState extends State<PantallaMisRecetas> {
       await ref.putFile(_imageFile!);
       final imageUrl = await ref.getDownloadURL();
 
+      // ✅ CORREGIDO: esAprovada inicia en null (pendiente)
       await FirebaseFirestore.instance.collection("SolicitudReceta").add({
         "categoria": _selectedCategory,
         "descripcion": _descriptionController.text.trim(),
-        "esAprovada": false,
+        "esAprovada":
+            null, // null = pendiente, true = aprobada, false = rechazada
         "fechaCreacion": Timestamp.now(),
         "imagen": imageUrl,
         "ingredientes": ingredientesList,
@@ -96,12 +98,12 @@ class _PantallaMisRecetasState extends State<PantallaMisRecetas> {
 
       setState(() {
         _imageFile = null;
-        _selectedCategory = categories.first; // vuelve a la primera
+        _selectedCategory = categories.first;
       });
 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: const Text("Solicitud enviada"),
+          content: const Text("Solicitud enviada correctamente"),
           backgroundColor: Colors.green[700],
         ),
       );
@@ -435,7 +437,7 @@ class _PantallaMisRecetasState extends State<PantallaMisRecetas> {
     _descriptionController.dispose();
     _ingredientsController.dispose();
     _stepsController.dispose();
-    super.dispose();
     _tiempoController.dispose();
+    super.dispose();
   }
 }

@@ -41,7 +41,7 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
     cargarCalificacionUsuario();
   }
 
-  /// 🔥 Verifica si ya es favorito
+  // Verifica si ya es favorito
   Future<void> verificarFavorito() async {
     final userDoc = await FirebaseFirestore.instance
         .collection('usuarios')
@@ -55,7 +55,7 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
     });
   }
 
-  /// ⭐ Agregar o quitar de favoritos
+  // ⭐ Agregar o quitar de favoritos
   Future<void> toggleFavorito() async {
     final userRef = FirebaseFirestore.instance
         .collection('usuarios')
@@ -76,7 +76,7 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
     });
   }
 
-  /// Guarda visita en historial
+  // Guarda visita en historial
   Future<void> agregarRecetaAlHistorial() async {
     final userRef = FirebaseFirestore.instance
         .collection('usuarios')
@@ -97,7 +97,7 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
     });
   }
 
-  /// ⭐ Cargar calificación del usuario si ya existe (CORREGIDO)
+  /// ⭐ Cargar calificación del usuario si ya existe
   Future<void> cargarCalificacionUsuario() async {
     final doc = await FirebaseFirestore.instance
         .collection('recetas')
@@ -134,7 +134,7 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
     });
   }
 
-  /// ⭐ Recalcular el promedio (CORREGIDO PARA STRING)
+  /// ⭐ Recalcular el promedio
   Future<void> actualizarPromedio() async {
     final ratingsRef = FirebaseFirestore.instance
         .collection('recetas')
