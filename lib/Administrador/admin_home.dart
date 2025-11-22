@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'admin_ver_recetas.dart';
 import 'nuevo_admin.dart';
 import 'admin_ver_solicitudes.dart';
@@ -14,36 +13,9 @@ class AdminHomeScreen extends StatefulWidget {
 }
 
 class _AdminHomeScreenState extends State<AdminHomeScreen> {
-  final TextEditingController buscarController = TextEditingController();
-  final CollectionReference recetasRef = FirebaseFirestore.instance.collection(
-    'Recetas',
-  );
-
   void _cerrarSesion(BuildContext context) async {
     await FirebaseAuth.instance.signOut();
     Navigator.pushNamedAndRemoveUntil(context, '/login', (route) => false);
-  }
-
-  void _buscarRecetas(BuildContext context) async {
-    String texto = buscarController.text.trim();
-    if (texto.isEmpty) return;
-
-    QuerySnapshot snapshot = await recetasRef
-        .where('esAprovada', isEqualTo: true)
-        .get();
-
-    List<QueryDocumentSnapshot> resultados = snapshot.docs.where((doc) {
-      String titulo = (doc.data() as Map<String, dynamic>)['titulo'] ?? '';
-      return titulo.toLowerCase().contains(texto.toLowerCase());
-    }).toList();
-
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) =>
-            AdminVerRecetas(recetasFiltradas: resultados, buscarTitulo: texto),
-      ),
-    );
   }
 
   @override
@@ -70,43 +42,6 @@ class _AdminHomeScreenState extends State<AdminHomeScreen> {
         child: ListView(
           children: [
             const SizedBox(height: 10),
-
-            // 🔎 BARRA DE BÚSQUEDA ESTILO MODERNO
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              decoration: BoxDecoration(
-                color: Colors.grey[100],
-                borderRadius: BorderRadius.circular(16),
-              ),
-              child: Row(
-                children: [
-                  const Icon(Icons.search, color: Colors.grey),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: TextField(
-                      controller: buscarController,
-                      decoration: const InputDecoration(
-                        hintText: 'Buscar recetas...',
-                        border: InputBorder.none,
-                      ),
-                    ),
-                  ),
-                  GestureDetector(
-                    onTap: () => _buscarRecetas(context),
-                    child: Container(
-                      padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFFFC107),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: const Icon(Icons.tune, color: Colors.black),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-
-            const SizedBox(height: 30),
 
             // 📌 TARJETAS DEL ADMIN
             _adminCard(
