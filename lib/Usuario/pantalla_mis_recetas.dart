@@ -33,7 +33,7 @@ class _PantallaMisRecetasState extends State<PantallaMisRecetas> {
   @override
   void initState() {
     super.initState();
-    _selectedCategory = categories.first; // OPCIÓN 2 IMPLEMENTADA
+    _selectedCategory = categories.first;
   }
 
   Future<void> enviarSolicitud() async {
