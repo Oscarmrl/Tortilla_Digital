@@ -61,7 +61,7 @@ class PantallaMisSolicitudes extends StatelessWidget {
               final titulo = data["titulo"] ?? "Sin título";
               final imagen = data["imagen"] ?? "";
               final fecha = _formatTimestamp(data["fechaCreacion"]);
-              final estado = data["estado"] ?? false;
+              final esAprovada = data["esAprovada"] ?? false;
 
               return Card(
                 elevation: 3,
@@ -94,13 +94,13 @@ class PantallaMisSolicitudes extends StatelessWidget {
                       vertical: 6,
                     ),
                     decoration: BoxDecoration(
-                      color: estado
+                      color: esAprovada
                           ? Colors.green[600]
                           : const Color.fromARGB(255, 247, 44, 44),
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Text(
-                      estado ? "Aprobada" : "No aprobada",
+                      esAprovada ? "Aprobada" : "No aprobada",
                       style: const TextStyle(color: Colors.white),
                     ),
                   ),
