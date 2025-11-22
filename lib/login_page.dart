@@ -7,7 +7,6 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:tortilla_digital/register_page.dart';
 import 'package:tortilla_digital/Usuario/pantallainicio.dart';
 import 'package:google_sign_in/google_sign_in.dart';
-import 'package:flutter_facebook_auth/flutter_facebook_auth.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -74,48 +73,7 @@ class _LoginPageState extends State<LoginPage> {
   }
 
   // -------------------------------------------------------------
-  // 🔥 LOGIN CON FACEBOOK
-  // -------------------------------------------------------------
-  Future<void> _loginWithFacebook() async {
-    try {
-      final result = await FacebookAuth.instance.login();
-
-      if (result.status == LoginStatus.success) {
-        final token = result.accessToken!;
-        final credential = FacebookAuthProvider.credential(token.token);
-
-        final userCredential = await FirebaseAuth.instance.signInWithCredential(
-          credential,
-        );
-
-        final uid = userCredential.user!.uid;
-
-        final userDoc = await FirebaseFirestore.instance
-            .collection('usuarios')
-            .doc(uid)
-            .get();
-
-        if (!userDoc.exists) {
-          await FirebaseFirestore.instance.collection('usuarios').doc(uid).set({
-            'nombre': userCredential.user!.displayName ?? 'Usuario',
-            'correo': userCredential.user!.email,
-            'rol': 'Usuario',
-            'fechaRegistro': FieldValue.serverTimestamp(),
-            'metodRegistro': 'Facebook',
-          });
-        }
-
-        _redirectUser(uid);
-      } else {
-        _showMessage("Error en Facebook: ${result.message}");
-      }
-    } catch (e) {
-      _showMessage("Error con Facebook: $e");
-    }
-  }
-
-  // -------------------------------------------------------------
-  // 🔥 REDIRIGIR SEGÚN ROL - CAMBIADO A Get.offAll()
+  // 🔥 REDIRIGIR SEGÚN ROL
   // -------------------------------------------------------------
   Future<void> _redirectUser(String uid) async {
     final userDoc = await FirebaseFirestore.instance
@@ -158,7 +116,7 @@ class _LoginPageState extends State<LoginPage> {
   }
 
   // -------------------------------------------------------------
-  // 🔥 GUARDAR O ELIMINAR DATOS SEGÚN CHECKBOX
+  // 🔥 GUARDAR / BORRAR CREDENCIALES
   // -------------------------------------------------------------
   Future<void> _handleRememberMe(String email, String password) async {
     final prefs = await SharedPreferences.getInstance();
@@ -175,7 +133,7 @@ class _LoginPageState extends State<LoginPage> {
   }
 
   // -------------------------------------------------------------
-  // 🔥 LOGIN CON EMAIL Y CONTRASEÑA
+  // 🔥 LOGIN NORMAL (EMAIL / CONTRASEÑA)
   // -------------------------------------------------------------
   Future<void> _login() async {
     final email = _emailController.text.trim();
@@ -261,6 +219,8 @@ class _LoginPageState extends State<LoginPage> {
     }
   }
 
+  // MENSAJES
+
   void _showMessage(String message) {
     Get.snackbar(
       'Aviso',
@@ -270,6 +230,8 @@ class _LoginPageState extends State<LoginPage> {
       snackPosition: SnackPosition.BOTTOM,
     );
   }
+
+  // Interfaz
 
   @override
   Widget build(BuildContext context) {
@@ -346,17 +308,6 @@ class _LoginPageState extends State<LoginPage> {
                       borderRadius: BorderRadius.circular(16),
                       borderSide: BorderSide.none,
                     ),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(16),
-                      borderSide: BorderSide.none,
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(16),
-                      borderSide: const BorderSide(
-                        color: Color(0xFFFFC107),
-                        width: 2,
-                      ),
-                    ),
                   ),
                 ),
 
@@ -391,17 +342,6 @@ class _LoginPageState extends State<LoginPage> {
                       borderRadius: BorderRadius.circular(16),
                       borderSide: BorderSide.none,
                     ),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(16),
-                      borderSide: BorderSide.none,
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(16),
-                      borderSide: const BorderSide(
-                        color: Color(0xFFFFC107),
-                        width: 2,
-                      ),
-                    ),
                   ),
                 ),
 
@@ -423,9 +363,6 @@ class _LoginPageState extends State<LoginPage> {
                               });
                             },
                             activeColor: const Color(0xFFFFC107),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(4),
-                            ),
                           ),
                         ),
                         const SizedBox(width: 8),
@@ -464,17 +401,11 @@ class _LoginPageState extends State<LoginPage> {
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(16),
                       ),
-                      elevation: 0,
-                      shadowColor: const Color(0xFFFFC107).withOpacity(0.3),
                     ),
                     child: _loading
-                        ? const SizedBox(
-                            width: 24,
-                            height: 24,
-                            child: CircularProgressIndicator(
-                              color: Colors.black,
-                              strokeWidth: 2,
-                            ),
+                        ? const CircularProgressIndicator(
+                            color: Colors.black,
+                            strokeWidth: 2,
                           )
                         : const Text(
                             'Iniciar Sesión',
@@ -505,7 +436,9 @@ class _LoginPageState extends State<LoginPage> {
 
                 const SizedBox(height: 24),
 
+                // Boton de google
                 Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Expanded(
                       child: _buildSocialButton(
@@ -517,15 +450,6 @@ class _LoginPageState extends State<LoginPage> {
                           width: 24,
                           height: 24,
                         ),
-                      ),
-                    ),
-                    const SizedBox(width: 16),
-                    Expanded(
-                      child: _buildSocialButton(
-                        label: 'Facebook',
-                        onTap: _loginWithFacebook,
-                        color: Colors.blue[800]!,
-                        icon: Icons.facebook,
                       ),
                     ),
                   ],
@@ -565,9 +489,6 @@ class _LoginPageState extends State<LoginPage> {
     );
   }
 
-  // -------------------------------------------------------------
-  // 🔥 BOTÓN SOCIAL COMPATIBLE CON IMAGEN PNG
-  // -------------------------------------------------------------
   Widget _buildSocialButton({
     IconData? icon,
     Image? image,
