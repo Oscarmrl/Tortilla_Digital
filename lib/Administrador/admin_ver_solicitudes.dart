@@ -66,8 +66,7 @@ class _AdminVerSolicitudesScreenState extends State<AdminVerSolicitudesScreen> {
                 final titulo = data['titulo'] ?? 'Sin título';
                 final descripcion = data['descripcion'] ?? '';
                 final solicitadoPor = data['solicitadoPor'] ?? 'Desconocido';
-                final estadoBool =
-                    data['esAprovada']; // ✅ CORRECTO: leer esAprovada
+                final estadoBool = data['esAprovada'];
                 final respuesta = data['respuesta'] ?? '';
 
                 String estadoTexto = estadoBool == true
@@ -173,9 +172,6 @@ class _AdminVerSolicitudesScreenState extends State<AdminVerSolicitudesScreen> {
     return TextStyle(fontSize: 14, color: color, height: 1.3);
   }
 
-  // ============================================================
-  // 🔥 CORREGIDO: Usar 'esAprovada' en lugar de 'estado'
-  // ============================================================
   void _actualizarSolicitud(
     String docId,
     bool nuevoEstado,
@@ -185,33 +181,24 @@ class _AdminVerSolicitudesScreenState extends State<AdminVerSolicitudesScreen> {
       final solicitudDoc = await solicitudesRef.doc(docId).get();
       final data = solicitudDoc.data() as Map<String, dynamic>;
 
-      // 1. Actualizar estado en SolicitudReceta con esAprovada
       await solicitudesRef.doc(docId).update({
-        'esAprovada': nuevoEstado, // ✅ CORRECTO: usar esAprovada
+        'esAprovada': nuevoEstado,
         'respuesta': nuevaRespuesta,
       });
-
-      // ----------------------------------------
-      // 2. Si es aprobada → copiar a Recetas con esAprovada = true
-      // ----------------------------------------
       if (nuevoEstado == true) {
-        // ✅ CORRECCIÓN: Mapear 'imagen' a 'imagenUrl'
         await FirebaseFirestore.instance.collection('Recetas').add({
           'categoria': data['categoria'],
           'descripcion': data['descripcion'],
           'esAprovada': true,
           'fechaCreacion': data['fechaCreacion'],
-          'imagenUrl': data['imagen'], // ✅ MAPEO CORRECTO
+          'imagenUrl': data['imagen'],
           'ingredientes': data['ingredientes'],
           'pasos': data['pasos'],
           'titulo': data['titulo'],
           'tiempo': data['tiempo'],
           'fechaAprobacion': Timestamp.now(),
-          'rating': 4.8, // Rating por defecto
+          'rating': 4.8,
         });
-
-        // OPCIONAL: eliminar solicitud después de aprobar
-        // await solicitudesRef.doc(docId).delete();
       }
       ScaffoldMessenger.of(
         context,
