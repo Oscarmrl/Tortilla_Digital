@@ -155,7 +155,7 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
     await FirebaseFirestore.instance
         .collection('recetas')
         .doc(widget.idReceta)
-        .update({'rating': promedio.toStringAsFixed(1)}); // STRING
+        .update({'rating': promedio.toStringAsFixed(1)});
   }
 
   /// ⭐ Mostrar modal para calificar
@@ -165,39 +165,43 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
       builder: (_) {
         double tempRating = userRating;
 
-        return AlertDialog(
-          title: Text("Califica esta receta"),
-          content: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: List.generate(5, (i) {
-              int star = i + 1;
-              return IconButton(
-                onPressed: () {
-                  setState(() {
-                    tempRating = star.toDouble();
-                  });
-                },
-                icon: Icon(
-                  Icons.star,
-                  size: 32,
-                  color: star <= tempRating ? Colors.amber : Colors.grey,
+        return StatefulBuilder(
+          builder: (context, setStateDialog) {
+            return AlertDialog(
+              title: const Text("Califica esta receta"),
+              content: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: List.generate(5, (i) {
+                  int star = i + 1;
+                  return IconButton(
+                    onPressed: () {
+                      setStateDialog(() {
+                        tempRating = star.toDouble();
+                      });
+                    },
+                    icon: Icon(
+                      Icons.star,
+                      size: 32,
+                      color: star <= tempRating ? Colors.amber : Colors.grey,
+                    ),
+                  );
+                }),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text("Cancelar"),
                 ),
-              );
-            }),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: Text("Cancelar"),
-            ),
-            ElevatedButton(
-              onPressed: () {
-                guardarCalificacion(tempRating);
-                Navigator.pop(context);
-              },
-              child: Text("Guardar"),
-            ),
-          ],
+                ElevatedButton(
+                  onPressed: () {
+                    guardarCalificacion(tempRating);
+                    Navigator.pop(context);
+                  },
+                  child: const Text("Guardar"),
+                ),
+              ],
+            );
+          },
         );
       },
     );
@@ -214,7 +218,7 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
               ? "Calificar receta"
               : "Tu calificación: ${userRating.toStringAsFixed(1)} ⭐",
         ),
-        icon: Icon(Icons.star),
+        icon: const Icon(Icons.star),
         backgroundColor: Colors.amber,
       ),
       body: Stack(
@@ -463,8 +467,10 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Container(
+            margin: const EdgeInsets.only(top: 4),
             width: 8,
             height: 8,
             decoration: const BoxDecoration(
@@ -473,7 +479,12 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
             ),
           ),
           const SizedBox(width: 12),
-          Text(text, style: const TextStyle(fontSize: 16)),
+          Expanded(
+            child: Text(
+              text,
+              style: const TextStyle(fontSize: 16, height: 1.4),
+            ),
+          ),
         ],
       ),
     );
