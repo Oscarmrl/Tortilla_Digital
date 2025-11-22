@@ -8,6 +8,9 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:image_picker/image_picker.dart';
 import 'dart:io';
 import 'package:path/path.dart' as path;
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:tortilla_digital/login_page.dart';
 import 'package:tortilla_digital/Usuario/pantalla_mis_recetas.dart';
 import 'package:tortilla_digital/Usuario/pantalla_mis_solicitudes.dart';
 import 'package:tortilla_digital/login_page.dart';
@@ -150,7 +153,6 @@ class _PantallaConfiguracionState extends State<PantallaConfiguracion> {
     return '${dateTime.day}/${dateTime.month}/${dateTime.year}';
   }
 
-  //Editar un campo de texto (nombre, etc.)
   Future<void> _editField(String field, String currentValue) async {
     final controller = TextEditingController(text: currentValue);
     final result = await showDialog<String?>(
@@ -217,7 +219,6 @@ class _PantallaConfiguracionState extends State<PantallaConfiguracion> {
     }
   }
 
-  //  Mostrar opciones de cámara o galería
   Future<void> _showImagePickerOptions() async {
     showModalBottomSheet(
       context: context,
@@ -281,7 +282,6 @@ class _PantallaConfiguracionState extends State<PantallaConfiguracion> {
     );
   }
 
-  // Tomar/Seleccionar imagen y subir a Firebase Storage
   Future<void> _pickAndUploadImage(ImageSource source) async {
     final picker = ImagePicker();
     final pickedFile = await picker.pickImage(source: source);

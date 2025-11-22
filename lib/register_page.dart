@@ -40,11 +40,9 @@ class _RegisterPageState extends State<RegisterPage> {
     try {
       setState(() => _loading = true);
 
-      // Crear usuario en Firebase Authentication
       UserCredential userCredential = await _auth
           .createUserWithEmailAndPassword(email: email, password: password);
 
-      // Guardar datos adicionales en Firestore
       await _firestore
           .collection('usuarios')
           .doc(userCredential.user!.uid)
@@ -362,7 +360,7 @@ class _RegisterPageState extends State<RegisterPage> {
                       GestureDetector(
                         onTap: () => Navigator.pop(context),
                         child: const Text(
-                          'Inicia Sesión',
+                          "Inicia sesión",
                           style: TextStyle(
                             color: Color(0xFFFFC107),
                             fontSize: 14,
