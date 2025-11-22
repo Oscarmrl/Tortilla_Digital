@@ -31,7 +31,6 @@ class _AdminVerSolicitudesScreenState extends State<AdminVerSolicitudesScreen> {
         ),
         centerTitle: true,
       ),
-
       body: Padding(
         padding: const EdgeInsets.all(20),
         child: StreamBuilder<QuerySnapshot>(
@@ -67,7 +66,8 @@ class _AdminVerSolicitudesScreenState extends State<AdminVerSolicitudesScreen> {
                 final titulo = data['titulo'] ?? 'Sin título';
                 final descripcion = data['descripcion'] ?? '';
                 final solicitadoPor = data['solicitadoPor'] ?? 'Desconocido';
-                final estadoBool = data['estado'];
+                final estadoBool =
+                    data['esAprovada']; // ✅ CORRECTO: leer esAprovada
                 final respuesta = data['respuesta'] ?? '';
 
                 String estadoTexto = estadoBool == true
@@ -107,7 +107,6 @@ class _AdminVerSolicitudesScreenState extends State<AdminVerSolicitudesScreen> {
                           ),
                         ),
                         const SizedBox(height: 10),
-
                         Text(
                           "Descripción: $descripcion",
                           style: _itemTextStyle(),
@@ -130,9 +129,7 @@ class _AdminVerSolicitudesScreenState extends State<AdminVerSolicitudesScreen> {
                             "Fecha: ${DateFormat('dd/MM/yyyy – HH:mm').format(fecha)}",
                             style: _itemTextStyle(),
                           ),
-
                         const SizedBox(height: 16),
-
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
@@ -177,7 +174,7 @@ class _AdminVerSolicitudesScreenState extends State<AdminVerSolicitudesScreen> {
   }
 
   // ============================================================
-  // 🔥 AQUÍ ESTÁ EL CAMBIO IMPORTANTE: MOVER A LA COLECCIÓN RECETAS
+  // 🔥 CORREGIDO: Usar 'esAprovada' en lugar de 'estado'
   // ============================================================
   void _actualizarSolicitud(
     String docId,
@@ -188,29 +185,38 @@ class _AdminVerSolicitudesScreenState extends State<AdminVerSolicitudesScreen> {
       final solicitudDoc = await solicitudesRef.doc(docId).get();
       final data = solicitudDoc.data() as Map<String, dynamic>;
 
-      // 1. Actualizar estado en SolicitudReceta
+      // 1. Actualizar estado en SolicitudReceta con esAprovada
       await solicitudesRef.doc(docId).update({
-        'estado': nuevoEstado,
+        'esAprovada': nuevoEstado, // ✅ CORRECTO: usar esAprovada
         'respuesta': nuevaRespuesta,
       });
 
       // ----------------------------------------
-      // 2. Si es aprobada → copiar a Recetas
+      // 2. Si es aprobada → copiar a Recetas con esAprovada = true
       // ----------------------------------------
       if (nuevoEstado == true) {
+        // ✅ CORRECCIÓN: Mapear 'imagen' a 'imagenUrl'
         await FirebaseFirestore.instance.collection('Recetas').add({
-          ...data,
-          'estado': true,
+          'categoria': data['categoria'],
+          'descripcion': data['descripcion'],
+          'esAprovada': true,
+          'fechaCreacion': data['fechaCreacion'],
+          'imagenUrl': data['imagen'], // ✅ MAPEO CORRECTO
+          'ingredientes': data['ingredientes'],
+          'pasos': data['pasos'],
+          'titulo': data['titulo'],
+          'tiempo': data['tiempo'],
           'fechaAprobacion': Timestamp.now(),
+          'rating': 4.8, // Rating por defecto
         });
 
-        // OPCIONAL: eliminar solicitud
+        // OPCIONAL: eliminar solicitud después de aprobar
         // await solicitudesRef.doc(docId).delete();
       }
 
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(SnackBar(content: Text('Solicitud actualizada')));
+      ).showSnackBar(const SnackBar(content: Text('Solicitud actualizada')));
     } catch (e) {
       ScaffoldMessenger.of(
         context,
