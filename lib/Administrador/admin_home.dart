@@ -42,8 +42,6 @@ class _AdminHomeScreenState extends State<AdminHomeScreen> {
         child: ListView(
           children: [
             const SizedBox(height: 10),
-
-            // 📌 TARJETAS DEL ADMIN
             _adminCard(
               icon: Icons.restaurant_menu,
               title: 'Ver Recetas',
@@ -103,7 +101,6 @@ class _AdminHomeScreenState extends State<AdminHomeScreen> {
     );
   }
 
-  // 🎨 TARJETAS MODERNAS COMO LA PANTALLA DE USUARIO
   Widget _adminCard({
     required IconData icon,
     required String title,

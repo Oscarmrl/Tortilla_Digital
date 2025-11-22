@@ -34,7 +34,6 @@ class MyApp extends StatelessWidget {
         ),
         primaryColor: const Color(0xFFFFC107),
       ),
-      // 🔥 CAMBIADO: Ahora inicia con AuthWrapper en lugar de login
       home: const AuthWrapper(),
       getPages: [
         GetPage(name: '/login', page: () => const LoginPage()),
@@ -49,9 +48,8 @@ class MyApp extends StatelessWidget {
   }
 }
 
-// ============================================================
-// 🔥 AUTH WRAPPER - Verifica si hay sesión activa
-// ============================================================
+//  AUTH WRAPPER - Verifica si hay sesión activa
+
 class AuthWrapper extends StatelessWidget {
   const AuthWrapper({super.key});
 
@@ -107,9 +105,6 @@ class AuthWrapper extends StatelessWidget {
   }
 }
 
-// ============================================================
-// 🔥 SPLASH SCREEN - Pantalla de carga elegante
-// ============================================================
 class SplashScreen extends StatelessWidget {
   const SplashScreen({super.key});
 

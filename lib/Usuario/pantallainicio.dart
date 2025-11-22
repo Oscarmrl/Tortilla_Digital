@@ -96,9 +96,7 @@ class _PantallaInicioState extends State<PantallaInicio> {
     );
   }
 
-  // =============================================================
-  // ===================== SECCIONES =============================
-  // =============================================================
+  // ===== SECCIONES =====
 
   Widget _buildHeader(String imagen) {
     return Row(

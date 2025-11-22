@@ -30,9 +30,7 @@ class _LoginPageState extends State<LoginPage> {
     _loadSavedCredentials();
   }
 
-  // -------------------------------------------------------------
-  // 🔥 LOGIN CON GOOGLE
-  // -------------------------------------------------------------
+  //  LOGIN CON GOOGLE
   Future<void> _loginWithGoogle() async {
     try {
       final googleUser = await GoogleSignIn().signIn();
@@ -72,9 +70,8 @@ class _LoginPageState extends State<LoginPage> {
     }
   }
 
-  // -------------------------------------------------------------
-  // 🔥 REDIRIGIR SEGÚN ROL
-  // -------------------------------------------------------------
+  //  REDIRIGIR SEGÚN ROL
+
   Future<void> _redirectUser(String uid) async {
     final userDoc = await FirebaseFirestore.instance
         .collection('usuarios')
@@ -96,9 +93,7 @@ class _LoginPageState extends State<LoginPage> {
     }
   }
 
-  // -------------------------------------------------------------
-  // 🔥 CARGAR CREDENCIALES GUARDADAS
-  // -------------------------------------------------------------
+  //  CARGAR CREDENCIALES GUARDADAS
   Future<void> _loadSavedCredentials() async {
     final prefs = await SharedPreferences.getInstance();
 
@@ -115,9 +110,7 @@ class _LoginPageState extends State<LoginPage> {
     }
   }
 
-  // -------------------------------------------------------------
-  // 🔥 GUARDAR / BORRAR CREDENCIALES
-  // -------------------------------------------------------------
+  //  GUARDAR O BORRAR CREDENCIALES
   Future<void> _handleRememberMe(String email, String password) async {
     final prefs = await SharedPreferences.getInstance();
 
@@ -132,9 +125,7 @@ class _LoginPageState extends State<LoginPage> {
     }
   }
 
-  // -------------------------------------------------------------
-  // 🔥 LOGIN NORMAL (EMAIL / CONTRASEÑA)
-  // -------------------------------------------------------------
+  //  LOGIN NORMAL (EMAIL / CONTRASEÑA)
   Future<void> _login() async {
     final email = _emailController.text.trim();
     final password = _passwordController.text.trim();

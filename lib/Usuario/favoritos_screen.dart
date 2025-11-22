@@ -19,7 +19,7 @@ class _PantallaFavoritosState extends State<PantallaFavoritos> {
   final TextEditingController _searchController = TextEditingController();
   String searchQuery = "";
 
-  int _selectedIndex = 1; // ⭐ FAVORITOS ES LA PESTAÑA ACTIVA
+  int _selectedIndex = 1;
 
   final String _placeholderImage =
       "https://images.unsplash.com/photo-1455619452474-d2be8b1e70cd?w=500";
@@ -64,7 +64,7 @@ class _PantallaFavoritosState extends State<PantallaFavoritos> {
 
                 final recetas = recipeSnapshot.data!.docs;
 
-                /// FILTRAR BUSQUEDA
+                // FILTRAR BUSQUEDA
                 final filtered = recetas.where((doc) {
                   final data = doc.data() as Map<String, dynamic>;
                   final title = (data['titulo'] ?? '').toLowerCase();
@@ -80,9 +80,7 @@ class _PantallaFavoritosState extends State<PantallaFavoritos> {
     );
   }
 
-  // =========================================================
   // --------------------- INTERFAZ COMPLETA ------------------
-  // =========================================================
 
   Widget _buildContent(List<QueryDocumentSnapshot> favorites) {
     return SingleChildScrollView(
@@ -99,7 +97,7 @@ class _PantallaFavoritosState extends State<PantallaFavoritos> {
     );
   }
 
-  // ---------------- CABECERA SUPERIOR ----------------
+  // -- CABECERA SUPERIOR ---
   Widget _buildHeaderTop() {
     return Column(
       children: [
@@ -153,7 +151,7 @@ class _PantallaFavoritosState extends State<PantallaFavoritos> {
     );
   }
 
-  // ---------------- Buscador ----------------
+  // --- Buscador --
   Widget _buildSearchBar() {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20),
@@ -183,7 +181,7 @@ class _PantallaFavoritosState extends State<PantallaFavoritos> {
     );
   }
 
-  // ---------------- GRID ----------------
+  // --- GRID ---
   Widget _buildFavoriteGrid(List<QueryDocumentSnapshot> recetas) {
     if (recetas.isEmpty) {
       return _buildEmptyStateWithHeader();
@@ -288,7 +286,7 @@ class _PantallaFavoritosState extends State<PantallaFavoritos> {
     );
   }
 
-  // ------------------------------ BOTTOM NAVIGATION ------------------------------
+  // -- Boton Navegacion --
   Widget _buildBottomNavigationBar() {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),

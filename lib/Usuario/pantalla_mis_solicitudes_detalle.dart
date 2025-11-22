@@ -29,7 +29,25 @@ class PantallaMisSolicitudesDetalle extends StatelessWidget {
 
     final tiempoCompleto = data["tiempo"] ?? "";
     final imagen = data["imagen"] ?? "";
-    final esAprovada = data["esAprovada"] ?? false;
+
+    // ✅ CORREGIDO: Usar solo esAprovada para determinar el estado
+    final esAprovada = data["esAprovada"];
+    final respuesta = data["respuesta"] ?? "";
+
+    // Determinar estado basado en esAprovada
+    String estadoTexto;
+    Color estadoColor;
+
+    if (esAprovada == true) {
+      estadoTexto = "Aprobada ✓";
+      estadoColor = Colors.green[600]!;
+    } else if (esAprovada == false) {
+      estadoTexto = "Rechazada";
+      estadoColor = Colors.red[600]!;
+    } else {
+      estadoTexto = "En revisión";
+      estadoColor = const Color(0xFFFFC107);
+    }
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -85,14 +103,15 @@ class PantallaMisSolicitudesDetalle extends StatelessWidget {
 
             const SizedBox(height: 10),
 
+            // Badge de estado
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
               decoration: BoxDecoration(
-                color: esAprovada ? Colors.green[600] : const Color(0xFFFFC107),
+                color: estadoColor,
                 borderRadius: BorderRadius.circular(10),
               ),
               child: Text(
-                esAprovada ? "Aprobada" : "En revisión",
+                estadoTexto,
                 style: const TextStyle(
                   color: Colors.white,
                   fontSize: 14,
@@ -100,6 +119,67 @@ class PantallaMisSolicitudesDetalle extends StatelessWidget {
                 ),
               ),
             ),
+
+            const SizedBox(height: 15),
+
+            // ✅ NUEVO: Mostrar respuesta del admin si existe
+            if (respuesta.isNotEmpty)
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(14),
+                decoration: BoxDecoration(
+                  color: esAprovada == true ? Colors.green[50] : Colors.red[50],
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: esAprovada == true
+                        ? Colors.green[200]!
+                        : Colors.red[200]!,
+                    width: 1.5,
+                  ),
+                ),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Icon(
+                      esAprovada == true ? Icons.check_circle : Icons.info,
+                      color: esAprovada == true
+                          ? Colors.green[700]
+                          : Colors.red[700],
+                      size: 22,
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            esAprovada == true
+                                ? "Respuesta del administrador"
+                                : "Motivo del rechazo",
+                            style: TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.bold,
+                              color: esAprovada == true
+                                  ? Colors.green[900]
+                                  : Colors.red[900],
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            respuesta,
+                            style: TextStyle(
+                              fontSize: 14,
+                              color: esAprovada == true
+                                  ? Colors.green[800]
+                                  : Colors.red[800],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
 
             const SizedBox(height: 25),
 
@@ -119,10 +199,20 @@ class PantallaMisSolicitudesDetalle extends StatelessWidget {
 
             const SizedBox(height: 40),
 
-            const Center(
+            Center(
               child: Text(
-                "Esta es una versión preliminar, si es aprobada el diseño final puede variar.",
-                style: TextStyle(fontSize: 13, color: Colors.grey),
+                esAprovada == true
+                    ? "¡Tu receta ha sido aprobada y publicada! 🎉"
+                    : esAprovada == false
+                    ? "Puedes crear una nueva solicitud con las correcciones sugeridas."
+                    : "Esta es una versión preliminar, si es aprobada el diseño final puede variar.",
+                style: TextStyle(
+                  fontSize: 13,
+                  color: esAprovada == null ? Colors.grey : Colors.black54,
+                  fontWeight: esAprovada != null
+                      ? FontWeight.w500
+                      : FontWeight.normal,
+                ),
                 textAlign: TextAlign.center,
               ),
             ),
