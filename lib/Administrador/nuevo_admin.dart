@@ -19,8 +19,6 @@ class _NuevoAdminScreenState extends State<NuevoAdminScreen> {
     'usuarios',
   );
   final FirebaseAuth _auth = FirebaseAuth.instance;
-
-  // Registrar usuario CORREGIDO - Ahora crea en Auth y Firestore
   Future<void> registrarAdministrador() async {
     final nombre = _nombreController.text.trim();
     final correo = _correoController.text.trim();
@@ -43,19 +41,17 @@ class _NuevoAdminScreenState extends State<NuevoAdminScreen> {
     }
 
     try {
-      // 1. CREAR USUARIO EN FIREBASE AUTHENTICATION
       final UserCredential userCredential = await _auth
           .createUserWithEmailAndPassword(email: correo, password: password);
 
       final String userId = userCredential.user!.uid;
 
-      // 2. Guardar información adicional en Firestore
       await usuariosRef.doc(userId).set({
         'nombre': nombre,
         'correo': correo,
         'rol': 'Admin',
         'fecha_creacion': DateTime.now(),
-        'uid': userId, // Guardar el UID para referencia
+        'uid': userId,
       });
 
       _nombreController.clear();
@@ -84,7 +80,6 @@ class _NuevoAdminScreenState extends State<NuevoAdminScreen> {
     }
   }
 
-  // Editar usuario
   void _editarUsuario(DocumentSnapshot u) {
     final data = u.data() as Map<String, dynamic>;
     _nombreController.text = data['nombre'] ?? '';
@@ -145,7 +140,6 @@ class _NuevoAdminScreenState extends State<NuevoAdminScreen> {
     );
   }
 
-  // Eliminar usuario
   void _eliminarUsuario(DocumentSnapshot u) {
     showDialog(
       context: context,
@@ -162,12 +156,7 @@ class _NuevoAdminScreenState extends State<NuevoAdminScreen> {
               try {
                 final data = u.data() as Map<String, dynamic>;
                 final String? uid = data['uid'];
-
-                // Eliminar de Firestore
                 await u.reference.delete();
-
-                // NOTA: Para eliminar de Authentication necesitarías Cloud Functions
-                // o permisos especiales de administrador
 
                 Navigator.pop(context);
               } catch (e) {
@@ -445,7 +434,6 @@ class _NuevoAdminScreenState extends State<NuevoAdminScreen> {
                 final data = u.data() as Map<String, dynamic>;
                 final currentRol = data['rol'];
 
-                // Manejar diferentes tipos de datos para el rol
                 String dropdownValue = 'Cliente';
 
                 if (currentRol is String) {
@@ -455,10 +443,8 @@ class _NuevoAdminScreenState extends State<NuevoAdminScreen> {
                     dropdownValue = 'Cliente';
                   }
                 } else if (currentRol is bool) {
-                  // Si el rol es un booleano, convertirlo a string
                   dropdownValue = currentRol ? 'Admin' : 'Cliente';
                 } else {
-                  // Valor por defecto para cualquier otro tipo
                   dropdownValue = 'Cliente';
                 }
 

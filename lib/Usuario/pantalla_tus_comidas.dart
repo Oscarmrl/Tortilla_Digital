@@ -143,7 +143,6 @@ class _MisComidasScreenState extends State<MisComidasScreen> {
               if (confirm == true) {
                 await limpiarHistorial();
 
-                // Opcional: mostrar Snackbar de confirmación
                 if (mounted) {
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(

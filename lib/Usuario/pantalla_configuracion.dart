@@ -56,7 +56,6 @@ class _PantallaConfiguracionState extends State<PantallaConfiguracion> {
       // Regresar al login eliminando todas las pantallas anteriores
       Get.offAll(() => const LoginPage());
 
-      // Mostrar mensaje de éxito
       Get.snackbar(
         'Éxito',
         'Sesión cerrada correctamente',
